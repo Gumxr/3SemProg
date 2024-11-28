@@ -147,8 +147,9 @@
       });
 
       // Fetch users and populate dropdown
-      fetch('/getUsers')
+      fetch('/users')
     .then(response => {
+        console.log("fetching /users")
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }

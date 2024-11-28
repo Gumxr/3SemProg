@@ -97,6 +97,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
 });
 
 function getUsers() {
+    console.log("am inside getUsers()")
     return new Promise((resolve, reject) => {
         db.all('SELECT id, email, phone, created_at FROM users', (err, rows) => {
             if (err) {
@@ -142,4 +143,3 @@ db.serialize(() => {
 */
 
 // Close the database connection
-module.exports = db;
