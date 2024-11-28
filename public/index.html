@@ -8,12 +8,102 @@
   <link rel="stylesheet" href="./styles/global.css">
   <title>JOE and The Juice</title>
 </head>
+<style>
+  .chat-container {
+      width: 1000px;
+      height: 1000px;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+  }
+
+  .chat-header {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+  }
+
+  .chat-messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      border-bottom: 1px solid #ddd;
+  }
+
+  .message {
+      margin: 5px 0;
+      padding: 8px 12px;
+      border-radius: 12px;
+      max-width: 70%;
+      display: inline-block;
+  }
+
+  .message.sent {
+      background-color: #007bff;
+      color: white;
+      align-self: flex-end;
+  }
+
+  .message.received {
+      background-color: #f1f1f1;
+      color: black;
+      align-self: flex-start;
+  }
+
+  .chat-input {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+  }
+
+  .chat-input input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+  }
+
+  .chat-input button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-left: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+  }
+
+  .chat-input button:hover {
+      background-color: #0056b3;
+  }
+</style>
 
 <body>
   <ul>
     <li><img src="./img/joeLogo.svg" alt="Logo"></li>
     <li><a href="/" class="active">Home</a></li>
   </ul>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            Intern Chat
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will appear here -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Type your message...">
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
+
   
   </div>
 
