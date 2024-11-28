@@ -96,4 +96,50 @@ const db = new sqlite3.Database(dbPath, (err) => {
     }
 });
 
+function getUsers() {
+    return new Promise((resolve, reject) => {
+        db.all('SELECT id, email, phone, created_at FROM users', (err, rows) => {
+            if (err) {
+                console.error('Error fetching users:', err.message);
+                reject(err); // Reject the promise with an error
+            } else {
+                resolve(rows); // Resolve the promise with rows
+            }
+        });
+    });
+}
+
+
+module.exports = {
+    getUsers
+};
+
+/* Insert two users into the database
+db.serialize(() => {
+    const insertUser = db.prepare(`
+        INSERT INTO users (email, phone, password)
+        VALUES (?, ?, ?)
+    `);
+
+    insertUser.run('user1@example.com', '1234567890', 'hashedpassword1', (err) => {
+        if (err) {
+            console.error('Error inserting user1:', err.message);
+        } else {
+            console.log('User1 inserted successfully.');
+        }
+    });
+
+    insertUser.run('user2@example.com', '0987654321', 'hashedpassword2', (err) => {
+        if (err) {
+            console.error('Error inserting user2:', err.message);
+        } else {
+            console.log('User2 inserted successfully.');
+        }
+    });
+
+    insertUser.finalize();
+});
+*/
+
+// Close the database connection
 module.exports = db;
