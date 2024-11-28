@@ -108,4 +108,32 @@
   </div>
 
 </body>
+
+<script>
+  const chatMessages = document.getElementById('chatMessages');
+  const messageInput = document.getElementById('messageInput');
+  const sendButton = document.getElementById('sendButton');
+
+  sendButton.addEventListener('click', () => {
+      const message = messageInput.value;
+      if (message) {
+          appendMessage('sent', message);
+          messageInput.value = '';
+          receiveMessage();
+      }
+  });
+
+  function receiveMessage() {
+      setTimeout(() => {
+          appendMessage('received', 'Hello! How can I help you today?');
+      }, 1000);
+  }
+
+  function appendMessage(type, message) {
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('message', type);
+      messageElement.innerText = message;
+      chatMessages.appendChild(messageElement);
+  }
+</script>
 </html>
