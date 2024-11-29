@@ -96,15 +96,18 @@ const db = new sqlite3.Database(dbPath, (err) => {
     }
 });
 
-function getUsers() {
-    console.log("am inside getUsers()")
+// Fetch users with optional search filter
+function getUsers(search) {
     return new Promise((resolve, reject) => {
-        db.all('SELECT id, email, phone, created_at FROM users', (err, rows) => {
+        let query = 'SELECT id, email FROM users WHERE email LIKE ?';
+        const params = [`${search}%`]; // Match emails starting with the search string
+
+        db.all(query, params, (err, rows) => {
             if (err) {
                 console.error('Error fetching users:', err.message);
-                reject(err); // Reject the promise with an error
+                reject(err);
             } else {
-                resolve(rows); // Resolve the promise with rows
+                resolve(rows);
             }
         });
     });

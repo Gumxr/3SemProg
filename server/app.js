@@ -24,14 +24,30 @@ app.listen(port, '0.0.0.0', () => {
 
 app.get('/users', async (req, res) => {
     try {
-        console.log("am inside endpoint /users")
-        const users = await db.getUsers();
-        if (!users || users.length === 0) {
-            return res.status(404).json({ message: 'No users found' });
+        const { search } = req.query; // Extract search parameter
+        let users;
+
+        if (search) {
+            console.log(`Searching users with query: ${search}`);
+            users = await db.getUsers(search); // Pass search query to the database function
+        } else {
+            users = []; // No results if no search is provided
         }
-        res.status(200).json(users);
+
+        if (users.length === 0) {
+            return res.status(200).json([]); // Return empty array for no results
+        }
+
+        // Filter out the phone numbers before sending the response
+        const filteredUsers = users.map(user => ({
+            id: user.id,
+            email: user.email
+        }));
+
+        res.status(200).json(filteredUsers);
     } catch (error) {
         console.error('Error fetching users:', error.message);
         res.status(500).json({ error: 'Failed to fetch users' });
     }
 });
+

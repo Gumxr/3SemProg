@@ -8,90 +8,28 @@
   <link rel="stylesheet" href="./styles/global.css">
   <title>JOE and The Juice</title>
 </head>
-
 <style>
-  .chat-container {
-      width: 1000px;
-      height: 1000px;
-      background-color: #fff;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-  }
-
-  .chat-header {
-      background-color: #007bff;
-      color: white;
-      padding: 10px;
-      text-align: center;
-      font-weight: bold;
-      border-top-left-radius: 8px;
-      border-top-right-radius: 8px;
-  }
-
-  .chat-messages {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-      border-bottom: 1px solid #ddd;
-  }
-
-  .message {
-      margin: 5px 0;
-      padding: 8px 12px;
-      border-radius: 12px;
-      max-width: 70%;
-      display: inline-block;
-  }
-
-  .message.sent {
-      background-color: #007bff;
-      color: white;
-      align-self: flex-end;
-  }
-
-  .message.received {
-      background-color: #f1f1f1;
-      color: black;
-      align-self: flex-start;
-  }
-
-  .chat-input {
-      display: flex;
-      padding: 10px;
-      border-top: 1px solid #ddd;
-  }
-
-  .chat-input input {
-      flex: 1;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-  }
-
-  .chat-input button {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      margin-left: 10px;
-      border-radius: 4px;
-      cursor: pointer;
-  }
-
-  .chat-input button:hover {
-      background-color: #0056b3;
-  }
-
-  .user-dropdown {
-      margin: 10px;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-  }
+    .search-container {
+        width: 400px;
+        margin: 20px auto;
+        font-family: Arial, sans-serif;
+    }
+    #searchUserInput {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .user-list {
+        list-style-type: none;
+        padding: 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
 </style>
 
 <body>
@@ -99,86 +37,58 @@
     <li><img src="./img/joeLogo.svg" alt="Logo"></li>
     <li><a href="/" class="active">Home</a></li>
   </ul>
+   <div class="search-container">
+        <input type="text" id="searchUserInput" placeholder="Search for a user...">
+        <ul class="user-list" id="userList">
+            <!-- Filtered user results will appear here dynamically -->
+        </ul>
+    </div>
+    </div>
 
-  <div class="chat-container">
-      <select class="user-dropdown" id="userDropdown">
-          <option value="" disabled selected>Select a user</option>
-      </select>
-      <div class="chat-header">
-          Intern Chat
-      </div>
-      <div class="chat-messages" id="chatMessages">
-          <!-- Messages will appear here -->
-      </div>
-      <div class="chat-input">
-          <input type="text" id="messageInput" placeholder="Type your message...">
-          <button id="sendButton">Send</button>
-      </div>
-  </div>
-
-  <script>
-      const chatMessages = document.getElementById('chatMessages');
-      const messageInput = document.getElementById('messageInput');
-      const sendButton = document.getElementById('sendButton');
-      const userDropdown = document.getElementById('userDropdown');
-
-      // Append new messages to the chat
-      function appendMessage(type, message) {
-          const messageElement = document.createElement('div');
-          messageElement.classList.add('message', type);
-          messageElement.innerText = message;
-          chatMessages.appendChild(messageElement);
-      }
-
-      // Simulate receiving a message
-      function receiveMessage() {
-          setTimeout(() => {
-              appendMessage('received', 'Hello! How can I help you today?');
-          }, 1000);
-      }
-
-      sendButton.addEventListener('click', () => {
-          const message = messageInput.value;
-          if (message) {
-              appendMessage('sent', message);
-              messageInput.value = '';
-              receiveMessage();
-          }
-      });
-
-      // Fetch users and populate dropdown
-      fetch('/users')
-    .then(response => {
-        console.log("fetching /users")
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        data.forEach(user => {
-            const option = document.createElement('option');
-            option.value = user.id; // Use user ID as the value
-            option.innerText = `${user.email} (${user.phone})`; // Display email and phone
-            userDropdown.appendChild(option);
+    <script>
+        const searchUserInput = document.getElementById('searchUserInput');
+        const userList = document.getElementById('userList');
+    
+        searchUserInput.addEventListener('input', () => {
+            const searchText = searchUserInput.value.trim().toLowerCase();
+    
+            // Require at least 2 characters for searching
+            if (searchText.length >= 2) {
+                fetch(`/users?search=${encodeURIComponent(searchText)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Error: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(users => {
+                        renderUserList(users);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching users:', error);
+                        userList.innerHTML = '<li>Error fetching users</li>';
+                    });
+            } else {
+                userList.innerHTML = ''; // Clear the list if input is too short
+            }
         });
-    })
-    .catch(error => console.error('Error fetching users:', error.message));
-
-      // Handle user selection
-      userDropdown.addEventListener('change', () => {
-          const selectedUser = userDropdown.value;
-          fetch(`/getMessages?user=${selectedUser}`)
-              .then(response => response.json())
-              .then(data => {
-                  chatMessages.innerHTML = ''; // Clear messages
-                  data.forEach(message => {
-                      appendMessage(message.type, message.text);
-                  });
-              })
-              .catch(error => console.error('Error fetching messages:', error));
-      });
-  </script>
-</body>
+    
+        function renderUserList(userArray) {
+            userList.innerHTML = ''; // Clear the list
+            if (userArray.length === 0) {
+                userList.innerHTML = '<li>No users found</li>';
+                return;
+            }
+            userArray.forEach(user => {
+                const li = document.createElement('li');
+                li.textContent = user.email; // Only display email
+                li.addEventListener('click', () => {
+                    alert(`Selected user: ${user.email}`);
+                });
+                userList.appendChild(li);
+            });
+        }
+    </script>
+    
 
 </html>
