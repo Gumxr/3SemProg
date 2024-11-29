@@ -1,3 +1,4 @@
+// Funktion til at søge og vælge modtager 
 const searchUserInput = document.getElementById('searchUserInput');
 const userList = document.getElementById('userList');
 
