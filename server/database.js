@@ -96,6 +96,23 @@ const db = new sqlite3.Database(dbPath, (err) => {
     }
 });
 
+// Add a user to the database
+function addUser(email, hashedPassword, phone, salt) {
+    return new Promise((resolve, reject) => {
+        const query = `INSERT INTO users (email, password_hash, phone, salt) VALUES (?, ?, ?, ?)`;
+        const params = [email, hashedPassword, phone, salt];
+
+        db.run(query, params, function (err) {
+            if (err) {
+                console.error('Error inserting user:', err.message);
+                reject(err);
+            } else {
+                resolve({ id: this.lastID });
+            }
+        });
+    });
+}
+
 // Fetch users with optional search filter
 function getUsers(search) {
     return new Promise((resolve, reject) => {
@@ -115,34 +132,37 @@ function getUsers(search) {
 
 
 module.exports = {
+    addUser,
     getUsers
 };
 
-/* Insert two users into the database
-db.serialize(() => {
-    const insertUser = db.prepare(`
-        INSERT INTO users (email, phone, password)
-        VALUES (?, ?, ?)
-    `);
 
-    insertUser.run('user1@example.com', '1234567890', 'hashedpassword1', (err) => {
-        if (err) {
-            console.error('Error inserting user1:', err.message);
-        } else {
-            console.log('User1 inserted successfully.');
-        }
-    });
+/* 
+db.run(`ALTER TABLE users ADD COLUMN salt TEXT`, (err) => {
+    if (err) {
+        console.error('Error adding salt column:', err.message);
+    } else {
+        console.log('Added salt column. Existing rows have NULL as default.');
+    }
+}
+);
 
-    insertUser.run('user2@example.com', '0987654321', 'hashedpassword2', (err) => {
-        if (err) {
-            console.error('Error inserting user2:', err.message);
-        } else {
-            console.log('User2 inserted successfully.');
-        }
-    });
+// delete the password column
+db.run(`ALTER TABLE users RENAME COLUMN password TO password_hash`, (err) => {
+    if (err) {
+        console.error('Error renaming password column:', err.message);
+    } else {
+        console.log('Renamed password column to password_hash.');
+    }
+}); */
 
-    insertUser.finalize();
+// delete the data inside the users table
+/* db.run(`DELETE FROM users`, (err) => {
+    if (err) {
+        console.error('Error deleting users:', err.message);
+    } else {
+        console.log('Deleted all users.');
+    }
 });
-*/
+ */
 
-// Close the database connection

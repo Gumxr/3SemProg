@@ -90,14 +90,10 @@ app.post('/create-user', async (req, res) => {
     const salt = crypto.randomBytes(16).toString('hex'); // Generate a random salt
     const hashedPassword = crypto.createHash('sha256').update(password + salt).digest('hex');
 
-    db.run(
-        `INSERT INTO users (email, password_hash, phone, salt) VALUES (?, ?, ?, ?)`,
-        [email, hashedPassword, phone, salt],
-        (err) => {
-            if (err) {
-                return res.status(500).json({ error: 'Fejl ved oprettelse af bruger' });
-            }
-            res.status(201).json({ message: 'Bruger oprettet!' });
-        }
-    );
+    try {
+        const user = await addUser(email, hashedPassword, phone, salt);
+        res.status(201).json({ message: 'Bruger oprettet!', userId: user.id });
+    } catch (err) {
+        res.status(500).json({ error: 'Fejl ved oprettelse af bruger' });
+    }
 });
