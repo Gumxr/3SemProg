@@ -68,4 +68,31 @@ app.post('/users/login', async (req, res) => {
     }
 });
 
+app.use(express.json());
 
+
+app.post('/validate-email', (req, res) => {
+    const { email } = req.body;
+
+    if (!email.endsWith('@joejuice.com')) {
+        return res.status(400).json({ error: 'Kun arbejds-e-mails er tilladt' });
+    }
+
+    res.status(200).json({ message: 'E-mail er gyldig!' });
+});
+
+app.post('/create-user', async (req, res) => {
+    const { email, password, phone } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    db.run(
+        `INSERT INTO users (email, password_hash, phone) VALUES (?, ?, ?)`,
+        [email, hashedPassword, phone],
+        (err) => {
+            if (err) {
+                return res.status(500).json({ error: 'Fejl ved oprettelse af bruger' });
+            }
+            res.status(201).json({ message: 'Bruger oprettet!' });
+        }
+    );
+});

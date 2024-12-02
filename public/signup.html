@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aktiver Profil</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1c1c1c;
+            color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .activation-container {
+            background-color: #2a2a2a;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+            width: 300px;
+            text-align: center;
+        }
+
+        .activation-container h2 {
+            margin-bottom: 20px;
+            color: #f09bc1;
+        }
+
+        .activation-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #f7c1d9;
+            border-radius: 5px;
+            background-color: #1c1c1c;
+            color: #f7f7f7;
+            font-size: 1em;
+        }
+
+        .activation-container input:focus {
+            border-color: #f09bc1;
+            outline: none;
+        }
+
+        .activation-container button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background-color: #f09bc1;
+            color: #1c1c1c;
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .activation-container button:hover {
+            background-color: #f088b7;
+        }
+
+        .activation-container .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="activation-container">
+        <h2 id="step-title">Trin 1: Indtast din arbejds-e-mail</h2>
+        <form id="activationForm">
+            <input type="email" id="email" placeholder="Arbejds-e-mail" required />
+            <button type="submit">Næste</button>
+        </form>
+    </div>
+
+    <script>
+        let currentStep = 1; // Track the current step
+        const form = document.getElementById('activationForm');
+        const stepTitle = document.getElementById('step-title');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (currentStep === 1) {
+                const email = document.getElementById('email').value;
+
+                // Validate email and move to next step
+                const response = await fetch('/validate-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email }),
+                });
+
+                if (response.ok) {
+                    // Move to Step 2
+                    currentStep++;
+                    stepTitle.textContent = 'Trin 2: Vælg din adgangskode';
+                    form.innerHTML = `
+                        <input type="password" id="password" placeholder="Adgangskode" required />
+                        <input type="password" id="confirmPassword" placeholder="Bekræft adgangskode" required />
+                        <button type="submit">Næste</button>
+                    `;
+                } else {
+                    alert('E-mail er ikke gyldig!');
+                }
+            } else if (currentStep === 2) {
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+
+                if (password !== confirmPassword) {
+                    alert('Adgangskoder matcher ikke!');
+                    return;
+                }
+
+                // Move to Step 3
+                currentStep++;
+                stepTitle.textContent = 'Trin 3: Indtast dit telefonnummer';
+                form.innerHTML = `
+                    <input type="tel" id="phone" placeholder="Telefonnummer" required />
+                    <button type="submit">Opret profil</button>
+                `;
+            } else if (currentStep === 3) {
+                const phone = document.getElementById('phone').value;
+
+                // Submit all data to backend
+                const response = await fetch('/create-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value,
+                        phone,
+                    }),
+                });
+
+                if (response.ok) {
+                    alert('Profil oprettet!');
+                    window.location.href = '/login';
+                } else {
+                    alert('Kunne ikke oprette profil!');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
