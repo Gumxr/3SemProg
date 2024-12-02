@@ -15,27 +15,26 @@ form.addEventListener('submit', async (e) => {
     if (currentStep === 1) {
         // Step 1: Validate email
         const email = document.getElementById('email').value;
-
-        const response = await fetch('/validate-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email }),
-        });
-
-        if (response.ok) {
-            console.log(`Email is valid! ${email}`);
-            userData.email = email; // Store email in userData
-
-            // Move to Step 2
-            currentStep++;
-            stepTitle.textContent = 'Trin 2: Vælg din adgangskode';
-            form.innerHTML = `
-                <input type="password" id="password" placeholder="Adgangskode" required />
-                <input type="password" id="confirmPassword" placeholder="Bekræft adgangskode" required />
-                <button type="submit">Næste</button>
-            `;
-        } else {
-            alert('E-mail er ikke gyldig!');
+    
+        try {
+            const response = await fetch('/validate-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+    
+            if (response.ok) {
+                const data = await response.json();
+                console.log(`Email is valid! ${email}`);
+                userData.email = email; // Store email in userData
+            } else {
+                const errorData = await response.json();
+                // Show specific error message from the backend
+                alert(errorData.error || 'E-mail er ikke gyldig!');
+            }
+        } catch (error) {
+            console.error('Error during email validation:', error.message);
+            alert('Der opstod en fejl. Prøv igen senere.');
         }
     } else if (currentStep === 2) {
         // Step 2: Confirm passwords

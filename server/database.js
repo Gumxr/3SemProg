@@ -1,3 +1,61 @@
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+
+
+// Correct path to the private directory
+const dbPath = path.join(__dirname, '../private/chat_app.db');
+
+// Connect to the database
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+        console.error('Error connecting to the database:', err.message);
+    } else {
+        console.log('Connected to the SQLite database.');
+    }
+});
+
+function addUser(email, hashedPassword, phone, salt) {
+    return new Promise((resolve, reject) => {
+        const query = `INSERT INTO users (email, password_hash, phone, salt) VALUES (?, ?, ?, ?)`;
+        const params = [email, hashedPassword, phone, salt];
+
+        console.log('Executing query:', query, 'with params:', params);
+
+        db.run(query, params, function (err) {
+            if (err) {
+                console.error('Error inserting user:', err.message);
+                reject(err);
+            } else {
+                console.log('User inserted with ID:', this.lastID);
+                resolve({ id: this.lastID });
+            }
+        });
+    });
+}
+
+// Fetch users with optional search filter
+function getUsers(search) {
+    return new Promise((resolve, reject) => {
+        let query = 'SELECT id, email FROM users WHERE email LIKE ?';
+        const params = [`${search}%`]; // Match emails starting with the search string
+
+        db.all(query, params, (err, rows) => {
+            if (err) {
+                console.error('Error fetching users:', err.message);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
+module.exports = {
+    addUser,
+    getUsers
+};
+
+
+//--------------------  Gammel kode --------------------
 /*const sqlite3 = require('sqlite3').verbose();
 
 // Create or connect to the SQLite database
@@ -81,64 +139,6 @@ db.close((err) => {
     }
 });
 */
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-
-// Correct path to the private directory
-const dbPath = path.join(__dirname, '../private/chat_app.db');
-
-// Connect to the database
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('Error connecting to the database:', err.message);
-    } else {
-        console.log('Connected to the SQLite database.');
-    }
-});
-
-function addUser(email, hashedPassword, phone, salt) {
-    return new Promise((resolve, reject) => {
-        const query = `INSERT INTO users (email, password_hash, phone, salt) VALUES (?, ?, ?, ?)`;
-        const params = [email, hashedPassword, phone, salt];
-
-        console.log('Executing query:', query, 'with params:', params);
-
-        db.run(query, params, function (err) {
-            if (err) {
-                console.error('Error inserting user:', err.message);
-                reject(err);
-            } else {
-                console.log('User inserted with ID:', this.lastID);
-                resolve({ id: this.lastID });
-            }
-        });
-    });
-}
-module.exports = {
-    addUser,
-};
-// Fetch users with optional search filter
-function getUsers(search) {
-    return new Promise((resolve, reject) => {
-        let query = 'SELECT id, email FROM users WHERE email LIKE ?';
-        const params = [`${search}%`]; // Match emails starting with the search string
-
-        db.all(query, params, (err, rows) => {
-            if (err) {
-                console.error('Error fetching users:', err.message);
-                reject(err);
-            } else {
-                resolve(rows);
-            }
-        });
-    });
-}
-module.exports = {
-    addUser,
-    getUsers
-};
-
-
 /* 
 db.run(`ALTER TABLE users ADD COLUMN salt TEXT`, (err) => {
     if (err) {
