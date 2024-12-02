@@ -60,7 +60,9 @@ form.addEventListener('submit', async (e) => {
         // Step 3: Collect phone number
         const phone = document.getElementById('phone').value;
         userData.phone = phone; // Store phone in userData
-
+        
+        // 
+        console.log('User data being sent:', userData.email, userData.phone);
         // Submit all data to backend
         const response = await fetch('/create-user', {
             method: 'POST',

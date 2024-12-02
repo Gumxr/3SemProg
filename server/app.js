@@ -2,15 +2,13 @@ const express = require('express');
 const path = require('path');
 const db = require('./database');
 const crypto = require('crypto');
-
-function generateSalt(length = 16) {
-    return crypto.randomBytes(length).toString('hex');
-  }
+const { addUser } = require('./database'); // Adjust the path if necessary
 
 const app = express();
 const port = 3000;
 
 app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.json()); // Add this line at the top, before defining routes
 
 console.log("app running")
 // Users Route
@@ -73,11 +71,11 @@ app.post('/users/login', async (req, res) => {
     }
 });
 
-app.use(express.json());
 
 app.post('/validate-email', (req, res) => {
     const { email } = req.body;
 
+    // Check if the email ends with @joejuice.com
     if (!email.endsWith('@joejuice.com')) {
         return res.status(400).json({ error: 'Kun arbejds-e-mails er tilladt' });
     }
@@ -87,13 +85,27 @@ app.post('/validate-email', (req, res) => {
 
 app.post('/create-user', async (req, res) => {
     const { email, password, phone } = req.body;
+
+    if (!email || !password || !phone) {
+        console.error('Missing fields:', { email, password, phone });
+        return res.status(400).json({ error: 'Missing fields in request body' });
+    }
+
+    console.log('Received data:', { email, password, phone });
+
     const salt = crypto.randomBytes(16).toString('hex'); // Generate a random salt
     const hashedPassword = crypto.createHash('sha256').update(password + salt).digest('hex');
 
+    console.log('Generated hashedPassword and salt:', { hashedPassword, salt });
+
     try {
         const user = await addUser(email, hashedPassword, phone, salt);
+        console.log('User created successfully:', user);
         res.status(201).json({ message: 'Bruger oprettet!', userId: user.id });
     } catch (err) {
-        res.status(500).json({ error: 'Fejl ved oprettelse af bruger' });
+        console.error('Error creating user:', err.message);
+        res.status(500).json({ error: 'Fejl ved oprettelse af bruger', details: err.message });
     }
 });
+
+app.use(express.json());
