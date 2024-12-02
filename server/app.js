@@ -51,3 +51,21 @@ app.get('/users', async (req, res) => {
     }
 });
 
+// Log in if user exists
+app.post('/users/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await db.getUser(email);
+
+        if (user && user.password === password) {
+            res.status(200).json({ id: user.id, email: user.email });
+        } else {
+            res.status(401).json({ error: 'Invalid email or password' });
+        }
+    } catch (error) {
+        console.error('Error logging in:', error.message);
+        res.status(500).json({ error: 'Failed to log in' });
+    }
+});
+
+
