@@ -1,6 +1,11 @@
 const express = require('express');
 const path = require('path');
 const db = require('./database');
+const crypto = require('crypto');
+
+function generateSalt(length = 16) {
+    return crypto.randomBytes(length).toString('hex');
+  }
 
 const app = express();
 const port = 3000;
@@ -70,7 +75,6 @@ app.post('/users/login', async (req, res) => {
 
 app.use(express.json());
 
-
 app.post('/validate-email', (req, res) => {
     const { email } = req.body;
 
@@ -83,11 +87,12 @@ app.post('/validate-email', (req, res) => {
 
 app.post('/create-user', async (req, res) => {
     const { email, password, phone } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const salt = crypto.randomBytes(16).toString('hex'); // Generate a random salt
+    const hashedPassword = crypto.createHash('sha256').update(password + salt).digest('hex');
 
     db.run(
-        `INSERT INTO users (email, password_hash, phone) VALUES (?, ?, ?)`,
-        [email, hashedPassword, phone],
+        `INSERT INTO users (email, password_hash, phone, salt) VALUES (?, ?, ?, ?)`,
+        [email, hashedPassword, phone, salt],
         (err) => {
             if (err) {
                 return res.status(500).json({ error: 'Fejl ved oprettelse af bruger' });
