@@ -1,8 +1,9 @@
 /* Reset and Base Styles */
 body {
   margin: 0;
-  font-family: Calibri, sans-serif;
-  background-color: #fff;
+  font-family: 'Calibri', sans-serif;
+  background-color: #1c1c1c; /* Dark background */
+  color: #f7f7f7; /* Light text for contrast */
 }
 
 /* Navigation Bar */
@@ -12,8 +13,10 @@ ul {
   padding: 0;
   display: flex;
   align-items: center;
-  background-color: #f7c1d9;
+  background-color: #2a2a2a; /* Darker nav background */
   font-size: 1.2em;
+  border-bottom: 2px solid #f09bc1; /* Pink accent line */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Slight shadow for depth */
 }
 
 li {
@@ -24,25 +27,24 @@ li img {
   display: block;
   width: 60px;
   padding: 10px;
+  border-radius: 50%; /* Circular image for modern feel */
 }
 
 li a {
   display: block;
-  color: rgb(41, 41, 41);
+  color: #f7c1d9; /* Soft pink text */
   text-align: center;
   padding: 14px 20px;
   text-decoration: none;
   font-weight: 500;
-  transition: background-color 0.3s ease, font-weight 0.3s ease;
-  border: 40%;
-
+  transition: background-color 0.3s ease, font-weight 0.3s ease, color 0.3s ease;
+  border-radius: 10px; /* Rounded edges for modern design */
 }
 
 li a:hover {
-  background-color: #f088b7;
+  background-color: #f09bc1; /* Pink hover effect */
+  color: #1c1c1c; /* Dark text for contrast */
   font-weight: bold;
-  border: 40%;
-
 }
 
 /* Centered Content */
@@ -57,36 +59,50 @@ li a:hover {
 
 /* Buttons */
 .center button {
-  border: 2px solid black;
+  border: 2px solid #f7c1d9; /* Pink border */
   border-radius: 10px;
   padding: 10px 20px;
-  background-color: #f7c1d9;
+  background-color: #2a2a2a; /* Match dark mode */
   font-weight: bold;
+  color: #f7c1d9; /* Pink text */
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .center button:hover {
-  background-color: #f088b7;
+  background-color: #f09bc1; /* Pink hover */
+  color: #1c1c1c; /* Dark text on hover */
   transform: scale(1.05);
 }
 
 /* Inputs */
 .center input,
 .center select {
-  border: 2px solid black;
+  border: 2px solid #f7c1d9; /* Pink border */
   border-radius: 10px;
   padding: 10px 20px;
   margin: 10px 0;
   font-size: 1em;
   width: 60%;
   max-width: 400px;
+  background-color: #2a2a2a; /* Dark input background */
+  color: #f7f7f7; /* Light text */
   box-sizing: border-box;
   transition: all 0.3s ease;
 }
 
+.center input::placeholder,
+.center select::placeholder {
+  color: #f09bc1; /* Pink placeholder text */
+}
+
 .center input:focus,
 .center select:focus {
-  border-color: #f09bc1;
+  border-color: #f09bc1; /* Bright pink focus */
   outline: none;
+<<<<<<< HEAD
 }*/
+=======
+  background-color: #1c1c1c; /* Slightly darker focus background */
+}
+>>>>>>> 5d969261ea4160bd0d2fdf90016f378233b9d45a

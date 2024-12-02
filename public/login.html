@@ -21,8 +21,8 @@
 
 <div id="loginForm">
     <form id="loginForm">
-        <label for="UsernameInput">Username:</label>
-        <input type="text" id="UsernameInput" name="username" placeholder="Enter Username">
+        <label for="emailInput">Email:</label>
+        <input type="text" id="emailInput" name="email" placeholder="Enter Email">
         <label for="passwordInput">Password:</label>
         <input type="password" id="passwordInput" name="password" placeholder="Enter Password">
         <button type="submit" id="LogInButton">Log In</button>
@@ -30,47 +30,49 @@
 </div>
     
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const loginForm = document.getElementById('loginForm');
-    loginForm.addEventListener('submit', function (event) {
-        event.preventDefault();
-        const username = document.getElementById('UsernameInput').value.trim();
-        const password = document.getElementById('passwordInput').value;
-
-        if (username === '' || password === '') {
-            alert('Please fill in all required fields.');
-            return;
-        }
-
-        fetch('/users/login', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username, password })
-        })
-        .then(response => {
-            if (response.ok) {
-                return response.json();
+    document.addEventListener('DOMContentLoaded', function () {
+        const loginForm = document.getElementById('loginForm');
+        loginForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+    
+            // Match variable names to form inputs
+            const email = document.getElementById('emailInput').value.trim(); // Use 'email' from the form
+            const password = document.getElementById('passwordInput').value; // Use 'password' from the form
+    
+            if (email === '' || password === '') {
+                alert('Please fill in all required fields.');
+                return;
             }
-            return response.text().then(text => {
-                throw new Error('Failed to login, server response: ' + text);
+    
+            fetch('/users/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }) // Match variable names to the backend
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                return response.text().then(text => {
+                    throw new Error('Failed to login, server response: ' + text);
+                });
+            })
+            .then(data => {
+                if (data.id) { 
+                    sessionStorage.setItem('userId', data.id); // Store `id` from backend
+                    sessionStorage.setItem('email', data.email); // Store `email` from backend
+                    alert(`Login successful! Welcome ${data.email}`);
+                    window.location.href = "../index.html"; // Redirect user
+                } else {
+                    alert('Login failed: ' + data.error);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('Login failed: ' + error.message);
             });
-        })
-        .then(data => {
-            if (data.user_id) { 
-                sessionStorage.setItem('userId', data.user_id); 
-                sessionStorage.setItem('username', data.username); 
-                alert(`Login successful! Welcome ${data.username}`);
-                window.location.href = "../MyProfile.html"; // redrict user
-            } else {
-                alert('Login failed: ' + data.message);
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-            alert('Login failed: ' + error.message);
         });
     });
-});
-
-</script>
+    </script>
+    
 </html>
