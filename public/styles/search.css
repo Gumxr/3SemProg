@@ -18,4 +18,11 @@
     border-radius: 4px;
     max-height: 300px;
     overflow-y: auto;
+    display: block;
+}
+
+.user-list li {
+    display: block; /* Ensures list items are displayed vertically */
+    padding: 10px;
+    border-bottom: 1px solid #ddd; /* Optional, adds separation between items */
 }
