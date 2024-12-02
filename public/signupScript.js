@@ -53,9 +53,10 @@ form.addEventListener('submit', async (e) => {
         currentStep++;
         stepTitle.textContent = 'Trin 3: Indtast dit telefonnummer';
         form.innerHTML = `
-            <input type="tel" id="phone" placeholder="Telefonnummer" required />
-            <button type="submit">Opret profil</button>
-        `;
+        <input type="tel" id="phone" placeholder="Telefonnummer" required />
+        <button type="submit">Opret profil</button>
+    `;
+    
     } else if (currentStep === 3) {
         // Step 3: Collect phone number
         const phone = document.getElementById('phone').value;
@@ -69,10 +70,18 @@ form.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData),
         });
-
+        // Check if the phone number is at least 5 digits
+         if (!/^\d{7,}$/.test(phone)) {
+        alert('Indtast et gyldigt telefonnummer! Minimum 7 cifre.');
+        return; // Stop form submission
+    }
         if (response.ok) {
             alert('Profil oprettet!');
-            window.location.href = '/login'; // Redirect to login page
+            window.location.href = '/index.html'; // Redirect to homepage
+            // Clear the form
+            form.innerHTML = '';
+            // Set session storage
+           
         } else {
             alert('Kunne ikke oprette profil!');
         }
