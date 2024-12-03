@@ -156,6 +156,7 @@ app.post('/users/login', async (req, res) => {
         res.status(200).json({message: "Login successful", user: user});
     } catch (err) {
         console.log('Error verifying user:', err.message);
+        res.status(401).json({ message: 'Invalid email or password' })
     }
 })
 

@@ -20,11 +20,14 @@ document.addEventListener('DOMContentLoaded', function () {
             body: JSON.stringify({ email, password }) // Match variable names to the backend
         })
         .then(response => {
+            console.log(response.status)
             if (response.ok) {
                 console.log("login attempt successful")
                 return response.json();
             }
             return response.text().then(text => {
+                document.getElementById('emailInput').value = '';
+                document.getElementById('passwordInput').value = '';
                 throw new Error('Failed to login, server response: ' + text);
             });
         })
@@ -41,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch((error) => {
             console.error('Error:', error);
-            alert('Login failed: ' + error.message);
+            alert(error.message);
         });
     });
 });
