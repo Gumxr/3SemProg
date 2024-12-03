@@ -144,4 +144,19 @@ app.post('/create-user', async (req, res) => {
     }
 });
 
+app.post('/users/login', async (req, res) => {
+    console.log("handling users/login post request")
+    const { email, password } = req.body;
+
+    console.log("Received data: ", { email, password });
+
+    try {
+        const user = await db.verifyUser(email, password);
+        console.log("user verified:", user);
+        res.status(200).json({message: "Login successful", user: user});
+    } catch (err) {
+        console.log('Error verifying user:', err.message);
+    }
+})
+
 app.use(express.json());

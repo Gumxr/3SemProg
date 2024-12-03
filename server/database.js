@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const crypto = require('crypto');
 
 
 // Correct path to the private directory
@@ -49,9 +50,48 @@ function getUsers(search) {
         });
     });
 }
+
+function verifyUser(email, password) {
+    return new Promise((resolve, reject) => {
+        // Query to find the user by email
+        const query = `SELECT id, email, password_hash, salt FROM users WHERE email = ?`;
+        const params = [email];
+
+        db.get(query, params, (err, row) => {
+            if (err) {
+                console.error('Error querying database:', err.message);
+                return reject(err);
+            }
+
+            if (!row) {
+                // If no user is found with the provided email
+                return reject(new Error('User not found'));
+            }
+
+            // Recreate the hashed password using the stored salt
+            const hashedInputPassword = crypto.createHash('sha256')
+                .update(password + row.salt)  // Combine the input password with the stored salt
+                .digest('hex');  // Create the hash in hexadecimal format
+
+            // Compare the generated hash with the stored hash
+            if (hashedInputPassword === row.password_hash) {
+                // Password matches, return user data
+                resolve({
+                    id: row.id,
+                    email: row.email,
+                });
+            } else {
+                // Password does not match
+                reject(new Error('Invalid password'));
+            }
+        });
+    });
+}
+
 module.exports = {
     addUser,
-    getUsers
+    getUsers,
+    verifyUser
 };
 
 
