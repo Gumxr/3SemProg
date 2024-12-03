@@ -2,7 +2,10 @@ const express = require('express');
 const path = require('path');
 const db = require('./database');
 const crypto = require('crypto');
-const { addUser } = require('./database'); // Adjust the path if necessary
+const { addUser } = require('./database'); 
+const { getUsers } = require('./database');
+
+
 
 const app = express();
 const port = 3000;
@@ -88,16 +91,33 @@ app.post('/users/create', async (req, res) => {
 });
 
 
-app.post('/validate-email', (req, res) => {
+app.post('/validate-email', async (req, res) => {
     const { email } = req.body;
 
-    // Check if the email ends with @joejuice.com
-    if (!email.endsWith('@joejuice.com')) {
-        return res.status(400).json({ error: 'Kun arbejds-e-mails er tilladt' });
+    if (!email) {
+        return res.status(400).json({ error: 'E-mail er påkrævet' });
     }
 
-    res.status(200).json({ message: 'E-mail er gyldig!' });
+    try {
+        // Check om email allerede findes i databasen
+        const existingUsers = await getUsers(email);
+        if (existingUsers.length > 0) {
+            return res.status(400).json({ error: 'E-mail findes allerede' });
+        }
+
+        // Valider om email slutter med @joejuice.com
+        if (!email.endsWith('@joejuice.com')) {
+            return res.status(400).json({ error: 'Kun arbejds-e-mails er tilladt' });
+        }
+
+        // Hvis alt er korrekt
+        res.status(200).json({ message: 'E-mail er gyldig!' });
+    } catch (error) {
+        console.error('Fejl ved validering af e-mail:', error.message);
+        res.status(500).json({ error: 'Serverfejl. Prøv igen senere.' });
+    }
 });
+
 
 app.post('/create-user', async (req, res) => {
     const { email, password, phone } = req.body;
