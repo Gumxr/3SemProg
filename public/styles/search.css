@@ -9,6 +9,12 @@
     margin-top: 104px;
   }
   
+  /* Search Title */
+  .search-container h2 {
+    margin-bottom: 26px;
+    color: #f09bc1;
+    font-size: 2.3em;
+  }
   
   /* Search Input */
   #searchUserInput {
