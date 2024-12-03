@@ -4,6 +4,9 @@ const db = require('./database');
 const crypto = require('crypto');
 const { addUser } = require('./database'); 
 const { getUsers } = require('./database');
+const jwt = require('jsonwebtoken');
+
+require('dotenv').config();
 
 const app = express();
 const port = 3000;
@@ -147,11 +150,28 @@ app.post('/users/login', async (req, res) => {
     try {
         const user = await db.verifyUser(email, password);
         console.log("user verified:", user);
-        res.status(200).json({message: "Login successful", user: user});
+        const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
+        res.status(200).json({message: "Login successful", user: user, accessToken: accessToken});
     } catch (err) {
         console.log('Error verifying user:', err.message);
         res.status(401).json({ message: 'Invalid email or password' })
     }
 })
+
+app.get('/getEmailViaJWT',authenticateToken, (req, res) => {
+    res.json(req.user.email);
+})
+
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization']
+    const token = authHeader && authHeader.split(' ')[1] // because authHeader = 'Bearer TOKEN'
+    if (token == null) return res.sendStatus(401);
+    
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403)
+        req.user = user
+        next()
+    })
+}
 
 app.use(express.json());
