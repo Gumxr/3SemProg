@@ -27,6 +27,15 @@ form.addEventListener('submit', async (e) => {
                 const data = await response.json();
                 console.log(`Email is valid! ${email}`);
                 userData.email = email; // Store email in userData
+
+                // Move to Step 2
+                currentStep++;
+                stepTitle.textContent = 'Trin 2: Vælg din adgangskode';
+                form.innerHTML = `
+                    <input type="password" id="password" placeholder="Adgangskode" required />
+                    <input type="password" id="confirmPassword" placeholder="Bekræft adgangskode" required />
+                    <button type="submit">Næste</button>
+            `;
             } else {
                 const errorData = await response.json();
                 // Show specific error message from the backend
