@@ -1,38 +1,30 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #1c1c1c;
-    color: #f7f7f7;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-}
-
+/* Activation Container */
 .activation-container {
     background-color: #2a2a2a;
-    padding: 20px 30px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
-    width: 300px; /* Consistent width */
+    padding: 26px 39px;
+    border-radius: 13px;
+    box-shadow: 0px 5px 13px rgba(0, 0, 0, 0.5);
+    width: 390px;
     text-align: center;
+    margin-top: 104px;
 }
 
 .activation-container h2 {
-    margin-bottom: 20px;
+    margin-bottom: 26px;
     color: #f09bc1;
+    font-size: 2.3em;
 }
 
 .activation-container input {
-    width: 100%; /* Ensure full width of the container */
-    box-sizing: border-box; /* Includes padding and border in width */
-    padding: 10px;
-    margin: 10px 0;
-    border: 2px solid #f7c1d9;
-    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 13px;
+    margin: 13px 0;
+    border: 2.6px solid #f7c1d9;
+    border-radius: 6.5px;
     background-color: #1c1c1c;
     color: #f7f7f7;
-    font-size: 1em;
+    font-size: 1.3em;
 }
 
 .activation-container input:focus {
@@ -41,18 +33,18 @@ body {
 }
 
 .activation-container button {
-    width: 100%; /* Match the width of input fields */
-    box-sizing: border-box; /* Includes padding and border in width */
-    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 13px;
     border: none;
     background-color: #f09bc1;
     color: #1c1c1c;
-    font-size: 1em;
+    font-size: 1.3em;
     font-weight: bold;
-    border-radius: 5px;
+    border-radius: 6.5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    margin-top: 10px;
+    margin-top: 13px;
 }
 
 .activation-container button:hover {
@@ -61,4 +53,11 @@ body {
 
 .activation-container .hidden {
     display: none;
+}
+
+/* Responsive Design for Smaller Screens */
+@media (max-width: 500px) {
+    .signup-container {
+        width: 80%;
+    }
 }

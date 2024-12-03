@@ -1,22 +1,30 @@
-/* Reset and Base Styles */
 body {
   margin: 0;
   font-family: 'Calibri', sans-serif;
   background-color: #1c1c1c; /* Dark background */
   color: #f7f7f7; /* Light text for contrast */
+  height: 100vh;
+  display: flex; /* Enable flexbox for centering */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  flex-direction: column; /* Ensures navbar stays at the top */
 }
 
-/* Navigation Bar */
 ul {
   list-style-type: none;
   margin: 0;
-  padding: 0;
+  padding: 0 15px; /* Horizontal padding */
   display: flex;
   align-items: center;
   background-color: #2a2a2a; /* Darker nav background */
   font-size: 1.2em;
   border-bottom: 2px solid #f09bc1; /* Pink accent line */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Slight shadow for depth */
+  height: 87px; /* Set fixed height */
+  position: fixed; /* Navbar stays at the top */
+  top: 0;
+  width: 100%; /* Full-width */
+  z-index: 100; /* Ensures navbar is above other elements */
 }
 
 li {
@@ -46,6 +54,7 @@ li a:hover {
   color: #1c1c1c; /* Dark text for contrast */
   font-weight: bold;
 }
+
 
 /* Centered Content */
 .center {
@@ -100,9 +109,4 @@ li a:hover {
 .center select:focus {
   border-color: #f09bc1; /* Bright pink focus */
   outline: none;
-<<<<<<< HEAD
-}*/
-=======
-  background-color: #1c1c1c; /* Slightly darker focus background */
 }
->>>>>>> 5d969261ea4160bd0d2fdf90016f378233b9d45a

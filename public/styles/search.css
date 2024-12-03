@@ -1,48 +1,64 @@
 /* Search Container */
 .search-container {
-    width: 400px;
-    margin: 20px auto;
-    font-family: 'Calibri', sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: #2a2a2a; /* Dark background */
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-}
-
-/* Input Field */
-#searchUserInput {
+    background-color: #2a2a2a;
+    padding: 26px 39px;
+    border-radius: 13px;
+    box-shadow: 0px 5px 13px rgba(0, 0, 0, 0.5);
+    width: 390px;
+    text-align: center;
+    margin-top: 104px;
+  }
+  
+  
+  /* Search Input */
+  #searchUserInput {
     width: 100%;
-    padding: 12px;
-    font-size: 16px;
-    margin-bottom: 15px;
-    border: 2px solid #f7c1d9; /* Pink border */
-    border-radius: 25px; /* Modern rounded look */
-    outline: none;
-    background: #1c1c1c; /* Dark input background */
-    color: #f7f7f7; /* Light text */
+    box-sizing: border-box;
+    padding: 13px;
+    margin: 13px 0;
+    border: 2.6px solid #f7c1d9;
+    border-radius: 6.5px;
+    background-color: #1c1c1c;
+    color: #f7f7f7;
+    font-size: 1.3em;
     transition: all 0.3s ease;
-}
-
-#searchUserInput::placeholder {
-    color: #f09bc1; /* Pink placeholder text */
-    font-style: italic;
-}
-
-#searchUserInput:focus {
-    border-color: #f09bc1; /* Bright pink focus border */
-    box-shadow: 0px 0px 10px rgba(240, 155, 193, 0.5); /* Pink glow effect */
-}
-
-/* User List */
-.user-list {
-    width: 100%;
+  }
+  
+  #searchUserInput:focus {
+    border-color: #f09bc1;
+    outline: none;
+    box-shadow: 0px 0px 10px rgba(240, 155, 193, 0.5);
+  }
+  
+  /* User List */
+  #userList {
     list-style-type: none;
     padding: 0;
-    border: 2px solid #f7c1d9; /* Pink border */
-    border-radius: 15px; /* Rounded corners */
-    max-height: 300px;
-    overflow-y: auto;
-}
+    margin: 0;
+    text-align: left;
+  }
+  
+  /* Individual List Items */
+  #userList li {
+    background-color: #f09bc1;
+    color: #0f0e0e;
+    padding: 13px;
+    margin-bottom: 10px;
+    border-radius: 6.5px;
+    cursor: pointer;
+    font-size: 1.3em;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+  
+  #userList li:hover {
+    background-color: #ca84a3;
+    transform: scale(1.02);
+  }
+  
+  /* Responsive Design for Smaller Screens */
+  @media (max-width: 500px) {
+    .search-container {
+      width: 104%;
+    }
+  }
+  

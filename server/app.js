@@ -5,8 +5,6 @@ const crypto = require('crypto');
 const { addUser } = require('./database'); 
 const { getUsers } = require('./database');
 
-
-
 const app = express();
 const port = 3000;
 
@@ -93,23 +91,19 @@ app.post('/users/create', async (req, res) => {
 
 app.post('/validate-email', async (req, res) => {
     const { email } = req.body;
-
     if (!email) {
         return res.status(400).json({ error: 'E-mail er påkrævet' });
     }
-
     try {
         // Check om email allerede findes i databasen
         const existingUsers = await getUsers(email);
         if (existingUsers.length > 0) {
             return res.status(400).json({ error: 'E-mail findes allerede' });
         }
-
         // Valider om email slutter med @joejuice.com
         if (!email.endsWith('@joejuice.com')) {
             return res.status(400).json({ error: 'Kun arbejds-e-mails er tilladt' });
         }
-
         // Hvis alt er korrekt
         res.status(200).json({ message: 'E-mail er gyldig!' });
     } catch (error) {
