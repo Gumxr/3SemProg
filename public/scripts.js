@@ -1,13 +1,22 @@
 // Funktion til at søge og vælge modtager 
 const searchUserInput = document.getElementById('searchUserInput');
 const userList = document.getElementById('userList');
+const logoutBtn = document.getElementById('logoutBtn');
 
 searchUserInput.addEventListener('input', () => {
     const searchText = searchUserInput.value.trim().toLowerCase();
 
     // Require at least 2 characters for searching
     if (searchText.length >= 2) {
-        fetch(`/users?search=${encodeURIComponent(searchText)}`)
+        const authToken = sessionStorage.getItem('authToken');
+
+        fetch(`/users?search=${encodeURIComponent(searchText)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}` // Send the authToken as a Bearer token
+            }
+        })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Error: ${response.status}`);
@@ -41,3 +50,9 @@ function renderUserList(userArray) {
         userList.appendChild(li);
     });
 }
+
+logoutBtn.addEventListener('click', () => {
+    sessionStorage.removeItem('authToken'); 
+    sessionStorage.removeItem('userId');    
+    sessionStorage.removeItem('email');     
+})

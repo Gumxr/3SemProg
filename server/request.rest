@@ -9,4 +9,4 @@ Content-Type: application/json
 ###
 
 GET http://localhost:3000/getEmailViaJWT
-Authorization: Bearer 06b2919a63bf5bf909bb1161191dc805727b668de44c46027bbf9163ca192e3af5019cf3328b8e8fc2e9ba09fe66a613f13fe3f41b1c14173aed06dfca501f27
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTUsImVtYWlsIjoiZGFuaWFsQGpvZWp1aWNlLmNvbSIsImlhdCI6MTczMzMwODYwOH0.fMm67ft2LK6uf5fE6rPyLG14kvZyaJ6YHm693CiiuqI

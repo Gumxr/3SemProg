@@ -29,7 +29,7 @@ app.listen(port, '0.0.0.0', () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
 
-app.get('/users', async (req, res) => {
+app.get('/users',authenticateToken, async (req, res) => {
     try {
         const { search } = req.query; // Extract search parameter
         let users;
@@ -158,10 +158,11 @@ app.post('/users/login', async (req, res) => {
     }
 })
 
-app.get('/getEmailViaJWT',authenticateToken, (req, res) => {
+app.get('/emailViaJWT',authenticateToken, (req, res) => {
     res.json(req.user.email);
 })
 
+// middleware
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization']
     const token = authHeader && authHeader.split(' ')[1] // because authHeader = 'Bearer TOKEN'

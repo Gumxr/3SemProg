@@ -17,34 +17,40 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch('/users/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }) // Match variable names to the backend
+            body: JSON.stringify({ email, password })
         })
         .then(response => {
-            console.log(response.status)
-            if (response.ok) {
-                console.log("login attempt successful")
-                return response.json();
+            if (!response.ok) {
+                return response.text().then(text => {
+                    document.getElementById('emailInput').value = '';
+                    document.getElementById('passwordInput').value = '';
+                    throw new Error('Failed to login, server response: ' + text);
+                });
             }
-            return response.text().then(text => {
-                document.getElementById('emailInput').value = '';
-                document.getElementById('passwordInput').value = '';
-                throw new Error('Failed to login, server response: ' + text);
-            });
+            return response.json();
         })
         .then(data => {
-            console.log("data:", data)
-            if (data.user.id) { 
-                sessionStorage.setItem('userId', data.user.id); // Store `id` from backend
-                sessionStorage.setItem('email', data.user.email); // Store `email` from backend
+            // Check if the token exists in the response
+            console.log(data)
+            if (data.accessToken) {
+                sessionStorage.setItem('authToken', data.accessToken); // Store JWT token
+                console.log("JWT token stored in sessionStorage:", data.accessToken);
+            }
+        
+            // Check if user information exists in the response
+            if (data.user && data.user.id) {
+                sessionStorage.setItem('userId', data.user.id);  // Store user ID
+                sessionStorage.setItem('email', data.user.email); // Store user email
                 alert(`Login successful! Welcome ${data.user.email}`);
-                window.location.href = "../index.html"; // Redirect user
+                window.location.href = "../index.html"; // Redirect to homepage
             } else {
-                alert('Login failed: ' + data.error);
+                throw new Error('Login failed: Missing user data');
             }
         })
-        .catch((error) => {
+        .catch(error => {
             console.error('Error:', error);
             alert(error.message);
         });
+        
     });
 });
