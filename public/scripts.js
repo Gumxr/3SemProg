@@ -3,6 +3,11 @@ const searchUserInput = document.getElementById('searchUserInput');
 const userList = document.getElementById('userList');
 const logoutBtn = document.getElementById('logoutBtn');
 
+const authToken = sessionStorage.getItem('authToken');
+if (!authToken) {
+    window.location.href = 'start.html';
+}
+
 searchUserInput.addEventListener('input', () => {
     const searchText = searchUserInput.value.trim().toLowerCase();
 
