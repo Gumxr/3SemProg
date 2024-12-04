@@ -15,14 +15,14 @@ form.addEventListener('submit', async (e) => {
     if (currentStep === 1) {
         // Step 1: Validate email
         const email = document.getElementById('email').value;
-    
+
         try {
             const response = await fetch('/validate-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
             });
-    
+
             if (response.ok) {
                 const data = await response.json();
                 console.log(`Email is valid! ${email}`);
@@ -35,10 +35,9 @@ form.addEventListener('submit', async (e) => {
                     <input type="password" id="password" placeholder="Adgangskode" required />
                     <input type="password" id="confirmPassword" placeholder="Bekræft adgangskode" required />
                     <button type="submit">Næste</button>
-            `;
+                `;
             } else {
                 const errorData = await response.json();
-                // Show specific error message from the backend
                 alert(errorData.error || 'E-mail er ikke gyldig!');
             }
         } catch (error) {
@@ -61,37 +60,44 @@ form.addEventListener('submit', async (e) => {
         currentStep++;
         stepTitle.textContent = 'Trin 3: Indtast dit telefonnummer';
         form.innerHTML = `
-        <input type="tel" id="phone" placeholder="Telefonnummer" required />
-        <button type="submit">Opret profil</button>
-    `;
-    
+            <input type="tel" id="phone" placeholder="Telefonnummer (minimum 7 cifre)" required />
+            <button type="submit">Opret profil</button>
+        `;
     } else if (currentStep === 3) {
         // Step 3: Collect phone number
         const phone = document.getElementById('phone').value;
+
+        // Validate phone number
+        if (!/^\d{7,}$/.test(phone)) {
+            alert('Indtast et gyldigt telefonnummer! Minimum 7 cifre.');
+            return; // Stop form submission
+        }
+
         userData.phone = phone; // Store phone in userData
-        
-        // 
-        console.log('User data being sent:', userData.email, userData.phone);
-        // Submit all data to backend
-        const response = await fetch('/create-user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData),
-        });
-        // Check if the phone number is at least 5 digits
-         if (!/^\d{7,}$/.test(phone)) {
-        alert('Indtast et gyldigt telefonnummer! Minimum 7 cifre.');
-        return; // Stop form submission
-    }
-        if (response.ok) {
-            alert('Profil oprettet!');
-            window.location.href = '/index.html'; // Redirect to homepage
-            // Clear the form
-            form.innerHTML = '';
-            // Set session storage
-           
-        } else {
-            alert('Kunne ikke oprette profil!');
+
+        try {
+            // Submit all data to backend
+            const response = await fetch('/create-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData),
+            });
+
+            if (response.ok) {
+                const responseData = await response.json();
+
+                // Store JWT token in localStorage
+                localStorage.setItem('accessToken', responseData.accessToken);
+
+                alert('Profil oprettet!');
+                window.location.href = '/index.html'; // Redirect to homepage
+            } else {
+                const errorData = await response.json();
+                alert(errorData.error || 'Kunne ikke oprette profil!');
+            }
+        } catch (error) {
+            console.error('Error during profile creation:', error.message);
+            alert('Der opstod en fejl. Prøv igen senere.');
         }
     }
 });

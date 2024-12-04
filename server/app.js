@@ -29,6 +29,7 @@ app.listen(port, '0.0.0.0', () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
 
+// Find users with optional search filter
 app.get('/users',authenticateToken, async (req, res) => {
     try {
         const { search } = req.query; // Extract search parameter
@@ -58,7 +59,7 @@ app.get('/users',authenticateToken, async (req, res) => {
     }
 });
 
-// Log in if user exists
+/* //Aciivate user 
 app.post('/users/create', async (req, res) => {
     try {
         const { email, password, phone } = req.body;
@@ -89,9 +90,9 @@ app.post('/users/create', async (req, res) => {
             res.status(500).json({ error: 'Failed to create user' });
         }
     }
-});
+}); */
 
-
+// Check if email is valid, unique, and ends with @joejuice.com
 app.post('/validate-email', async (req, res) => {
     const { email } = req.body;
     if (!email) {
@@ -115,32 +116,48 @@ app.post('/validate-email', async (req, res) => {
     }
 });
 
-
+// Create a new user
 app.post('/create-user', async (req, res) => {
-    const { email, password, phone } = req.body;
-
-    if (!email || !password || !phone) {
-        console.error('Missing fields:', { email, password, phone });
-        return res.status(400).json({ error: 'Missing fields in request body' });
-    }
-
-    console.log('Received data:', { email, password, phone });
-
-    const salt = crypto.randomBytes(16).toString('hex'); // Generate a random salt
-    const hashedPassword = crypto.createHash('sha256').update(password + salt).digest('hex');
-
-    console.log('Generated hashedPassword and salt:', { hashedPassword, salt });
-
     try {
-        const user = await addUser(email, hashedPassword, phone, salt);
-        console.log('User created successfully:', user);
-        res.status(201).json({ message: 'Bruger oprettet!', userId: user.id });
+        const { email, password, phone } = req.body;
+
+        if (!email || !password || !phone) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        if (!/^\d{7,}$/.test(phone)) {
+            return res.status(400).json({ error: 'Invalid phone number. Must be at least 7 digits.' });
+        }
+
+        const salt = crypto.randomBytes(16).toString('hex');
+        const hashedPassword = crypto.createHash('sha256').update(password + salt).digest('hex');
+
+        const newUser = await db.addUser(email, hashedPassword, phone, salt);
+
+        // Generate JWT token
+        const userPayload = { id: newUser.id, email: newUser.email };
+        const accessToken = jwt.sign(userPayload, process.env.ACCESS_TOKEN_SECRET);
+
+        res.status(201).json({
+            message: 'User created successfully!',
+            user: userPayload,
+            accessToken: accessToken,
+        });
     } catch (err) {
-        console.error('Error creating user:', err.message);
-        res.status(500).json({ error: 'Fejl ved oprettelse af bruger', details: err.message });
+        if (err.message.includes('UNIQUE constraint failed: users.email')) {
+            res.status(409).json({ error: 'Email is already in use' });
+        } else if (err.message.includes('UNIQUE constraint failed: users.phone')) {
+            res.status(409).json({ error: 'Phone number is already in use' });
+        } else {
+            console.error('Error creating user:', err.message);
+            res.status(500).json({ error: 'Failed to create user' });
+        }
     }
 });
 
+
+
+// Login user
 app.post('/users/login', async (req, res) => {
     console.log("handling users/login post request")
     const { email, password } = req.body;
