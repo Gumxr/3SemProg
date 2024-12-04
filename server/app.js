@@ -175,9 +175,14 @@ app.post('/users/login', async (req, res) => {
     }
 })
 
-app.get('/emailViaJWT',authenticateToken, (req, res) => {
-    res.json(req.user.email);
-})
+app.get('/emailViaJWT', authenticateToken, (req, res) => {
+    if (!req.user || !req.user.email) {
+        return res.status(403).json({ error: 'Invalid token' });
+    }
+
+    res.status(200).json({ email: req.user.email });
+});
+
 
 // middleware
 function authenticateToken(req, res, next) {

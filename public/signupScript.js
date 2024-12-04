@@ -14,7 +14,7 @@ form.addEventListener('submit', async (e) => {
 
     if (currentStep === 1) {
         // Step 1: Validate email
-        const email = document.getElementById('email').value;
+        const email = document.getElementById('email').value.trim();
 
         try {
             const response = await fetch('/validate-email', {
@@ -65,7 +65,7 @@ form.addEventListener('submit', async (e) => {
         `;
     } else if (currentStep === 3) {
         // Step 3: Collect phone number
-        const phone = document.getElementById('phone').value;
+        const phone = document.getElementById('phone').value.trim();
 
         // Validate phone number
         if (!/^\d{7,}$/.test(phone)) {
@@ -85,12 +85,22 @@ form.addEventListener('submit', async (e) => {
 
             if (response.ok) {
                 const responseData = await response.json();
+                console.log('Signup response:', responseData);
 
-                // Store JWT token in localStorage
-                localStorage.setItem('accessToken', responseData.accessToken);
+                // Store JWT token and user data in sessionStorage
+                if (responseData.accessToken) {
+                    sessionStorage.setItem('authToken', responseData.accessToken); // Store JWT token
+                    console.log("JWT token stored in sessionStorage:", responseData.accessToken);
+                }
 
-                alert('Profil oprettet!');
-                window.location.href = '/index.html'; // Redirect to homepage
+                if (responseData.user && responseData.user.id) {
+                    sessionStorage.setItem('userId', responseData.user.id); // Store user ID
+                    sessionStorage.setItem('email', responseData.user.email); // Store user email
+                    alert(`Signup successful! Welcome ${responseData.user.email}`);
+                    window.location.href = "../index.html"; // Redirect to homepage
+                } else {
+                    throw new Error('Signup failed: Missing user data');
+                }
             } else {
                 const errorData = await response.json();
                 alert(errorData.error || 'Kunne ikke oprette profil!');
