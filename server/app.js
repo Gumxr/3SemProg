@@ -59,39 +59,6 @@ app.get('/users',authenticateToken, async (req, res) => {
     }
 });
 
-/* //Aciivate user 
-app.post('/users/create', async (req, res) => {
-    try {
-        const { email, password, phone } = req.body;
-
-        if (!email || !password || !phone) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-
-        // Validate phone number length (minimum 5 digits)
-        if (!/^\d{7,}$/.test(phone)) {
-            return res.status(400).json({ error: 'Invalid phone number. Must be at least 7 digits.' });
-        }
-
-        // Generate salt and hashed password
-        const salt = crypto.randomBytes(16).toString('hex');
-        const hashedPassword = crypto.createHash('sha256').update(password + salt).digest('hex');
-
-        // Add user to the database
-        const newUser = await db.addUser(email, hashedPassword, phone, salt);
-        res.status(201).json({ message: 'User created successfully!', userId: newUser.id });
-    } catch (err) {
-        if (err.message.includes('UNIQUE constraint failed: users.email')) {
-            res.status(409).json({ error: 'Email is already in use' });
-        } else if (err.message.includes('UNIQUE constraint failed: users.phone')) {
-            res.status(409).json({ error: 'Phone number is already in use' });
-        } else {
-            console.error('Error creating user:', err.message);
-            res.status(500).json({ error: 'Failed to create user' });
-        }
-    }
-}); */
-
 // Check if email is valid, unique, and ends with @joejuice.com
 app.post('/validate-email', async (req, res) => {
     const { email } = req.body;
@@ -155,8 +122,6 @@ app.post('/create-user', async (req, res) => {
     }
 });
 
-
-
 // Login user
 app.post('/users/login', async (req, res) => {
     console.log("handling users/login post request")
@@ -196,5 +161,63 @@ function authenticateToken(req, res, next) {
         next()
     })
 }
+
+// Get all chats for a user
+app.get('/chats/:userId', authenticateToken, async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        const chats = await db.getChats(userId);
+        res.status(200).json(chats);
+    } catch (error) {
+        console.error('Error fetching chats:', error.message);
+        res.status(500).json({ error: 'Failed to fetch chats' });
+    }
+});
+
+// Get messages for a specific chat
+app.get('/messages/:chatId', authenticateToken, async (req, res) => {
+    const chatId = req.params.chatId;
+    try {
+        const messages = await db.getMessages(chatId);
+        res.status(200).json(messages);
+    } catch (error) {
+        console.error('Error fetching messages:', error.message);
+        res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+});
+
+// Send a message
+app.post('/messages', authenticateToken, async (req, res) => {
+    const { senderId, receiverId, content } = req.body;
+
+    if (!senderId || !receiverId || !content) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        await db.sendMessage(senderId, receiverId, content);
+        res.status(201).json({ message: 'Message sent successfully' });
+    } catch (error) {
+        console.error('Error sending message:', error.message);
+        res.status(500).json({ error: 'Failed to send message' });
+    }
+});
+
+// Create a new chat
+app.post('/chats', authenticateToken, async (req, res) => {
+    const { userOneId, userTwoId } = req.body;
+
+    if (!userOneId || !userTwoId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        const chat = await db.createChat(userOneId, userTwoId);
+        res.status(201).json(chat);
+    } catch (error) {
+        console.error('Error creating chat:', error.message);
+        res.status(500).json({ error: 'Failed to create chat' });
+    }
+});
 
 app.use(express.json());
