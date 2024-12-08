@@ -50,9 +50,7 @@ function renderUserList(userArray) {
         const li = document.createElement('li');
         li.textContent = user.email; // Only display email
         li.addEventListener('click', () => {
-           //log the user id and email to the console
-              console.log(user.id, user.email);
-
+            alert(`Selected user: ${user.email}`);
         });
         userList.appendChild(li);
     });
