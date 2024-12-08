@@ -1,10 +1,27 @@
+<<<<<<< Updated upstream
 // Funktion til at søge og vælge modtager 
 const searchUserInput = document.getElementById('searchUserInput');
 const userList = document.getElementById('userList');
+=======
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("Page content loaded!");
 
-searchUserInput.addEventListener('input', () => {
-    const searchText = searchUserInput.value.trim().toLowerCase();
+    // DOM Elements
+    const searchUserInput = document.getElementById("searchUserInput");
+    const userList = document.getElementById("userList");
+    const chatContainer = document.getElementById("chatContainer");
+    const chatWithUser = document.getElementById("chatWithUser");
+    const chatMessages = document.getElementById("chatMessages");
+    const messageInput = document.getElementById("messageInput");
+    const sendMessageBtn = document.getElementById("sendMessageBtn");
+    const backToSearchBtn = document.getElementById("backToSearchBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+>>>>>>> Stashed changes
 
+    let currentChatId = null;
+    let currentReceiverId = null;
+
+<<<<<<< Updated upstream
     // Require at least 2 characters for searching
     if (searchText.length >= 2) {
         fetch(`/users?search=${encodeURIComponent(searchText)}`)
@@ -30,18 +47,66 @@ function renderUserList(userArray) {
     userList.innerHTML = ''; // Clear the list
     if (userArray.length === 0) {
         userList.innerHTML = '<li>No users found</li>';
+=======
+    // Ensure user is authenticated
+    const authToken = sessionStorage.getItem("authToken");
+    if (!authToken) {
+        window.location.href = "start.html"; // Redirect to login if not authenticated
+>>>>>>> Stashed changes
         return;
     }
-    userArray.forEach(user => {
-        const li = document.createElement('li');
-        li.textContent = user.email; // Only display email
-        li.addEventListener('click', () => {
-            alert(`Selected user: ${user.email}`);
+
+    // Fetch and display user search results
+    searchUserInput.addEventListener("input", () => {
+        const searchText = searchUserInput.value.trim().toLowerCase();
+
+        if (searchText.length >= 2) {
+            fetch(`/users?search=${encodeURIComponent(searchText)}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${authToken}`, // Include auth token
+                },
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`Error: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((users) => {
+                    renderUserList(users);
+                })
+                .catch((error) => {
+                    console.error("Error fetching users:", error);
+                    userList.innerHTML = "<li>Error fetching users</li>";
+                });
+        } else {
+            userList.innerHTML = ""; // Clear the list if input is too short
+        }
+    });
+
+    // Render user list
+   // Render user list
+function renderUserList(userArray) {
+    userList.innerHTML = ""; // Clear the list
+    if (userArray.length === 0) {
+        userList.innerHTML = "<li>No users found</li>";
+        return;
+    }
+    userArray.forEach((user) => {
+        const li = document.createElement("li");
+        li.textContent = user.email; // Display email
+        li.addEventListener("click", () => {
+            console.log("Selected Receiver ID:", user.id); // Log the receiver ID
+            console.log("Selected Receiver Email:", user.email); // Log the receiver email
+            openChat(user.id, user.email); // Pass selected user details to openChat
         });
         userList.appendChild(li);
     });
 }
 
+<<<<<<< Updated upstream
 // Funktion til at aktivere email (sign up)
 let currentStep = 1; // Track the current step
 const form = document.getElementById('activationForm');
@@ -120,4 +185,102 @@ form.addEventListener('submit', async (e) => {
             alert('Kunne ikke oprette profil!');
         }
     }
+=======
+   // Open chat with a selected user
+   function openChat(receiverId, receiverEmail) {
+    currentReceiverId = receiverId; // Set receiverId
+    chatContainer.style.display = "block"; // Show chat container
+    chatWithUser.textContent = `Chatting with: ${receiverEmail}`; // Display selected user email
+
+    // Fetch or create a chat
+    fetch("/chats", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`, // Include auth token
+        },
+        body: JSON.stringify({ userTwoId: receiverId }),
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            currentChatId = data.chatId; // Save chat ID for further communication
+            loadMessages(); // Load existing messages in the chat
+        })
+        .catch((error) => {
+            console.error("Error opening chat:", error);
+        });
+}
+
+    // Load messages for the current chat
+    function loadMessages() {
+        fetch(`/messages/${currentChatId}`, {
+            headers: { Authorization: `Bearer ${authToken}` },
+        })
+            .then((response) => response.json())
+            .then((messages) => {
+                chatMessages.innerHTML = ""; // Clear previous messages
+                messages.forEach((msg) => {
+                    const div = document.createElement("div");
+                    div.textContent = `${msg.sender_id === parseInt(sessionStorage.getItem("userId"))
+                        ? "You"
+                        : "Them"
+                        }: ${msg.content}`;
+                    chatMessages.appendChild(div);
+                });
+            })
+            .catch((error) => console.error("Error loading messages:", error));
+    }
+
+// Send a message
+sendMessageBtn.addEventListener("click", () => {
+    const content = messageInput.value.trim();
+    if (!content || !currentReceiverId) {
+        console.error("Message content or receiver ID is missing");
+        return;
+    }
+
+    fetch("/messages", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`, // Include the auth token
+        },
+        body: JSON.stringify({
+            receiver_id: currentReceiverId, // Pass receiver_id to backend
+            content: content,              // Pass message content
+        }),
+    })
+        .then((response) => {
+            if (!response.ok) {
+                return response.text().then((text) => {
+                    throw new Error(`Error sending message: ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(() => {
+            messageInput.value = ""; // Clear input
+            loadMessages();          // Reload chat messages
+        })
+        .catch((error) => {
+            console.error("Error sending message:", error.message);
+        });
+});
+
+    // Go back to the search interface
+    backToSearchBtn.addEventListener("click", () => {
+        chatContainer.style.display = "none";
+        chatMessages.innerHTML = "";
+        currentChatId = null;
+        currentReceiverId = null;
+    });
+
+    // Handle logout
+    logoutBtn.addEventListener("click", () => {
+        sessionStorage.removeItem("authToken");
+        sessionStorage.removeItem("userId");
+        sessionStorage.removeItem("email");
+        window.location.href = "start.html";
+    });
+>>>>>>> Stashed changes
 });

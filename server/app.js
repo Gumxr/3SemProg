@@ -73,6 +73,92 @@ app.post('/users/login', async (req, res) => {
     }
 });
 
+<<<<<<< Updated upstream
+=======
+
+// middleware
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization']
+    const token = authHeader && authHeader.split(' ')[1] // because authHeader = 'Bearer TOKEN'
+    if (token == null) return res.sendStatus(401);
+    
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403)
+        req.user = user
+        next()
+    })
+}
+
+// chats 
+app.post('/chats', authenticateToken, async (req, res) => {
+    const { userTwoId } = req.body;
+    const userOneId = req.user.id;
+
+    try {
+        const chatId = await db.getOrCreateChat(userOneId, userTwoId);
+        res.status(201).json({ chatId });
+    } catch (err) {
+        console.error('Error creating chat:', err.message);
+        res.status(500).json({ error: 'Failed to create or fetch chat' });
+    }
+});
+
+app.post('/messages', authenticateToken, async (req, res) => {
+    const { chatId, content } = req.body;
+    const senderId = req.user.id;
+
+    try {
+        const chat = await db.getChatsForUser(senderId);
+        const receiverId = chat.user_one_id === senderId ? chat.user_two_id : chat.user_one_id;
+
+        const messageId = await db.sendMessage(chatId, senderId, receiverId, content);
+        res.status(201).json({ messageId });
+    } catch (err) {
+        console.error('Error sending message:', err.message);
+        res.status(500).json({ error: 'Failed to send message' });
+    }
+});
+
+app.post("/messages", authenticateToken, async (req, res) => {
+    const { receiver_id, content } = req.body; // Extract receiver_id and content
+    const sender_id = req.user.userId;        // Use authenticated user's ID as sender
+
+    if (!receiver_id || !content) {
+        return res.status(400).json({ error: "Missing receiver_id or content" });
+    }
+
+    try {
+        const query = `
+            INSERT INTO messages (sender_id, receiver_id, content, timestamp)
+            VALUES (?, ?, ?, datetime('now'))
+        `;
+        const params = [sender_id, receiver_id, content];
+
+        db.run(query, params, function (err) {
+            if (err) {
+                console.error("Error inserting message:", err.message);
+                return res.status(500).json({ error: "Failed to send message" });
+            }
+            res.status(201).json({ message: "Message sent successfully", messageId: this.lastID });
+        });
+    } catch (error) {
+        console.error("Error handling /messages:", error.message);
+        res.status(500).json({ error: "Failed to send message" });
+    }
+});
+
+app.get('/chats', authenticateToken, async (req, res) => {
+    const userId = req.user.id;
+
+    try {
+        const chats = await db.getChatsForUser(userId);
+        res.status(200).json(chats);
+    } catch (err) {
+        console.error('Error fetching chats:', err.message);
+        res.status(500).json({ error: 'Failed to fetch chats' });
+    }
+});
+>>>>>>> Stashed changes
 app.use(express.json());
 
 app.post('/validate-email', (req, res) => {

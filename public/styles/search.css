@@ -57,6 +57,7 @@
     align-items: center;
     gap: 10px;
     cursor: pointer;
+<<<<<<< Updated upstream
     transition: background-color 0.3s ease, transform 0.2s ease, color 0.3s ease;
 }
 
@@ -89,3 +90,133 @@
 .user-list li:hover span {
     color: #1c1c1c; /* Dark text on hover */
 }
+=======
+    font-size: 1.3em;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+  
+  #userList li:hover {
+    background-color: #ca84a3;
+    transform: scale(1.02);
+  }
+  /* Chat Container */
+#chatContainer {
+  display: none; /* Initially hidden */
+  background-color: #2a2a2a;
+  padding: 26px;
+  border-radius: 13px;
+  box-shadow: 0px 5px 13px rgba(0, 0, 0, 0.5);
+  width: 390px;
+  margin: 20px auto;
+  text-align: left;
+  color: #f7f7f7;
+}
+
+/* Chat Header */
+#chatWithUser {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #f09bc1;
+  margin-bottom: 20px;
+}
+
+/* Chat Messages */
+#chatMessages {
+  background-color: #1c1c1c;
+  padding: 10px;
+  border: 2.6px solid #f7c1d9;
+  border-radius: 6.5px;
+  height: 200px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+/* Individual Chat Message */
+#chatMessages div {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 1.1em;
+}
+
+#chatMessages div:nth-child(odd) {
+  background-color: #f09bc1;
+  color: #0f0e0e;
+}
+
+#chatMessages div:nth-child(even) {
+  background-color: #ca84a3;
+  color: #0f0e0e;
+}
+
+/* Message Input */
+#messageInput {
+  width: calc(100% - 100px); /* Adjust width to fit next to the send button */
+  box-sizing: border-box;
+  padding: 10px;
+  border: 2.6px solid #f7c1d9;
+  border-radius: 6.5px;
+  background-color: #1c1c1c;
+  color: #f7f7f7;
+  font-size: 1.3em;
+  margin-right: 10px;
+  transition: all 0.3s ease;
+}
+
+#messageInput:focus {
+  border-color: #f09bc1;
+  outline: none;
+  box-shadow: 0px 0px 10px rgba(240, 155, 193, 0.5);
+}
+
+/* Send Button */
+#sendMessageBtn {
+  padding: 10px 15px;
+  background-color: #f09bc1;
+  border: none;
+  border-radius: 6.5px;
+  color: #1c1c1c;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+#sendMessageBtn:hover {
+  background-color: #ca84a3;
+  transform: scale(1.05);
+}
+
+/* Back to Search Button */
+#backToSearchBtn {
+  margin-top: 10px;
+  padding: 10px 15px;
+  background-color: #1c1c1c;
+  border: 2.6px solid #f09bc1;
+  border-radius: 6.5px;
+  color: #f7f7f7;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+#backToSearchBtn:hover {
+  background-color: #f09bc1;
+  color: #1c1c1c;
+  transform: scale(1.05);
+}
+
+/* Responsive Design for Smaller Screens */
+@media (max-width: 500px) {
+  #chatContainer {
+      width: 100%;
+      padding: 15px;
+  }
+
+  #messageInput {
+      width: calc(100% - 80px); /* Adjust for smaller screens */
+  }
+}
+  
+
+  
+>>>>>>> Stashed changes
