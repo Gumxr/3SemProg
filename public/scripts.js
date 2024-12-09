@@ -49,6 +49,7 @@ searchUserInput.addEventListener('input', () => {
     } else {
         userList.innerHTML = ''; // Clear the list if input is too short
         chatMessages.innerHTML = '';
+        loadPreviousChats()
     }
 });
 
@@ -156,6 +157,70 @@ sendMessageButton.addEventListener('click', () => {
     .catch(error => {
         console.error('Error sending message:', error);
     });
+});
+
+// Fetch and display all previous chats on page load
+function loadPreviousChats() {
+    fetch(`/chats/${userId}`, {
+        headers: {
+            'Authorization': `Bearer ${authToken}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to fetch chats');
+        }
+        return response.json();
+    })
+    .then(chats => {
+        console.log(chats)
+        if (chats.length === 0) {
+            chatMessages.innerHTML = '<div>No previous chats available</div>';
+            return;
+        }
+
+        chats.forEach(chat => {
+            const chatElement = document.createElement('div');
+            chatElement.innerHTML = `<h3>Chat with userId:${chat.user_two_id}</h3> <br> 
+                ${chat.last_timestamp}: ${chat.last_message}
+            `;
+            chatMessages.appendChild(chatElement);
+
+            // Fetch and display messages for each chat
+            chatElement.addEventListener('click', () => {
+                chatMessages.innerHTML = '';
+                fetch(`/messages/${chat.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch messages');
+                    }
+                    return response.json();
+                })
+                .then(messages => {
+                    messages.forEach(message => {
+                        const messageElement = document.createElement('div');
+                        messageElement.textContent = `${message.sender_id}: ${message.content}`;
+                        chatMessages.appendChild(messageElement);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching messages:', error);
+                });
+            })
+        });
+    })
+    .catch(error => {
+        console.error('Error loading chats:', error);
+    });
+}
+
+// Load chats on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+    loadPreviousChats();
 });
 
 logoutBtn.addEventListener('click', () => {

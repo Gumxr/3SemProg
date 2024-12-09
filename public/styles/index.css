@@ -6,7 +6,6 @@
     background-color: #f09bc2;
     overflow: hidden;
     padding: 26px 39px;
-    width: 390px;
   }
   
   .chat-container h2 {
@@ -19,7 +18,6 @@
   .chat-messages {
     max-height: 400px;
     overflow-y: auto;
-    padding: 10px;
     background-color: #f09bc2;
     border-bottom: 1px solid #ddd;
     color: #1c1c1c;
