@@ -196,22 +196,50 @@ function sendMessage(senderId, receiverId, content) {
 
 function createChat(userOneId, userTwoId) {
     return new Promise((resolve, reject) => {
-        const query = `
-            INSERT INTO chats (user_one_id, user_two_id, last_message, last_timestamp, unread_count) 
-            VALUES (?, ?, '', datetime('now'), 0)
+        // Step 1: Check if the chat already exists
+        const checkQuery = `
+            SELECT id FROM chats
+            WHERE (user_one_id = ? AND user_two_id = ?) 
+            OR (user_one_id = ? AND user_two_id = ?)
         `;
-        const params = [userOneId, userTwoId];
+        const checkParams = [userOneId, userTwoId, userTwoId, userOneId];
 
-        db.run(query, params, function (err) {
+        console.log("Checking for existing chat with query:", checkQuery, "and params:", checkParams);
+
+        db.get(checkQuery, checkParams, (err, row) => {
             if (err) {
-                console.error('Error creating chat:', err.message);
+                console.error('Error checking for existing chat:', err.message);
                 reject(err);
             } else {
-                resolve({ id: this.lastID });
+                // If a chat already exists, return the existing chat ID
+                if (row) {
+                    console.log('Chat already exists with ID:', row.id);
+                    resolve({ id: row.id });
+                } else {
+                    // Step 2: Create a new chat if it doesn't exist
+                    const insertQuery = `
+                        INSERT INTO chats (user_one_id, user_two_id, last_message, last_timestamp, unread_count) 
+                        VALUES (?, ?, '', datetime('now'), 0)
+                    `;
+                    const insertParams = [userOneId, userTwoId];
+
+                    console.log("Creating new chat with query:", insertQuery, "and params:", insertParams);
+
+                    db.run(insertQuery, insertParams, function (err) {
+                        if (err) {
+                            console.error('Error creating chat:', err.message);
+                            reject(err);
+                        } else {
+                            console.log('New chat created with ID:', this.lastID);
+                            resolve({ id: this.lastID });
+                        }
+                    });
+                }
             }
         });
     });
 }
+
 
 module.exports = {
     addUser,

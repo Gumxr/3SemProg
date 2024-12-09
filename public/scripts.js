@@ -113,6 +113,7 @@ function loadMessages(chatId) {
         return response.json();
     })
     .then(messages => {
+        console.log("messages:", messages)
         chatMessages.innerHTML = ''; // Clear previous messages
         messages.forEach(message => {
             const messageElement = document.createElement('div');
