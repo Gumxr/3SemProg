@@ -48,6 +48,7 @@ searchUserInput.addEventListener('input', () => {
             });
     } else {
         userList.innerHTML = ''; // Clear the list if input is too short
+        chatMessages.innerHTML = '';
     }
 });
 

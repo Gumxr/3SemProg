@@ -5,6 +5,8 @@
     border-radius: 10px;
     background-color: #f09bc2;
     overflow: hidden;
+    padding: 26px 39px;
+    width: 390px;
   }
   
   .chat-container h2 {
@@ -44,6 +46,7 @@
     background-color: #f0f0f0;
     gap: 10px;
     align-items: center;
+    border-radius: 10px;
   }
   
   .chat-input-container input {
