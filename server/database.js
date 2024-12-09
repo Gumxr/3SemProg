@@ -123,6 +123,7 @@ function getMessages(chatId) {
                 reject(err);
             } else {
                 resolve(rows);
+                console.log("rows:", rows)
             }
         });
     });
