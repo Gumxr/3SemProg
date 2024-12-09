@@ -2,10 +2,21 @@
 const searchUserInput = document.getElementById('searchUserInput');
 const userList = document.getElementById('userList');
 const logoutBtn = document.getElementById('logoutBtn');
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const sendMessageButton = document.getElementById('sendMessageButton');
+
+let currentChatId = null; // Store the current chat ID
 
 const authToken = sessionStorage.getItem('authToken');
+const userId = sessionStorage.getItem('userId');
+
 if (!authToken) {
-    window.location.href = 'start.html';
+    window.location.href = 'start.html'; // Redirect to login if no auth token
+}
+
+if (!userId) {
+    console.error('User ID is missing.');
 }
 
 searchUserInput.addEventListener('input', () => {
@@ -51,10 +62,99 @@ function renderUserList(userArray) {
         li.textContent = user.email; // Only display email
         li.addEventListener('click', () => {
             alert(`Selected user: ${user.email}`);
+            startChat(user.id)
+            userList.innerHTML = ''; // Clear the list
+            searchUserInput.value = user.email;
         });
         userList.appendChild(li);
     });
 }
+
+// Start a chat with the selected user
+function startChat(receiverId) {
+    console.log("inside 'startChat' function")
+    fetch(`/chats`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+            userOneId: userId, // Current user
+            userTwoId: receiverId // Selected user
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to create chat');
+        }
+        return response.json();
+    })
+    .then(chat => {
+        currentChatId = chat.id; // Store the current chat ID
+        loadMessages(currentChatId); // Load messages for the chat
+    })
+    .catch(error => {
+        console.error('Error starting chat:', error);
+    });
+}
+
+// Load messages for the current chat
+function loadMessages(chatId) {
+    fetch(`/messages/${chatId}`, {
+        headers: {
+            'Authorization': `Bearer ${authToken}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to load messages');
+        }
+        return response.json();
+    })
+    .then(messages => {
+        chatMessages.innerHTML = ''; // Clear previous messages
+        messages.forEach(message => {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = `${message.sender_id}: ${message.content}`;
+            chatMessages.appendChild(messageElement);
+        });
+    })
+    .catch(error => {
+        console.error('Error fetching messages:', error);
+    });
+}
+
+sendMessageButton.addEventListener('click', () => {
+    const messageContent = chatInput.value.trim();
+    if (!messageContent || !currentChatId) {
+        alert('Please enter a message or select a chat.');
+        return;
+    }
+
+    fetch(`/messages`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+            senderId: userId,
+            receiverId: currentChatId, // The chat ID where the message is going
+            content: messageContent
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to send message');
+        }
+        loadMessages(currentChatId); // Reload messages after sending
+        chatInput.value = ''; // Clear the input field
+    })
+    .catch(error => {
+        console.error('Error sending message:', error);
+    });
+});
 
 logoutBtn.addEventListener('click', () => {
     sessionStorage.removeItem('authToken'); 
