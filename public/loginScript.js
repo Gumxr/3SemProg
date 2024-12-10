@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
             sessionStorage.setItem('authToken', data.accessToken);
             sessionStorage.setItem('userId', data.user.id);
             sessionStorage.setItem('email', data.user.email);
-            sessionStorage.setItem('passphrase', data.user.passphrase);
+            sessionStorage.setItem('passphrase', data.user.passphrase); // directly from server response
 
             // Decrypt and store the private key
             if (data.user.encryptedPrivateKey) {
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 try {
                     const privateKey = await decryptPrivateKey(encryptedPrivateKey, passphrase);
-                    sessionStorage.setItem('privateKey', JSON.stringify(privateKey)); // Convert key to string for storage
+                    sessionStorage.setItem('privateKey', JSON.stringify(privateKey)); 
                     console.log('Decrypted private key stored in sessionStorage');
                 } catch (error) {
                     console.error('Failed to decrypt private key:', error.message);
@@ -82,9 +82,3 @@ async function decryptPrivateKey(encryptedPrivateKey, passphrase) {
         throw new Error('Decryption failed. Ensure the passphrase is correct.');
     }
 }
-
-
-
-console.log('Passphrase:', passphrase);
-console.log('Encrypted Private Key:', encryptedPrivateKey);
-

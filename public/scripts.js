@@ -5,6 +5,7 @@ const chatList = document.getElementById('chatList');
 const chatMessages = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
 const sendMessageButton = document.getElementById('sendMessageButton');
+const logoutBtn = document.getElementById('logoutBtn');
 
 // Global Variables
 let currentChatId = null; // Store the current chat ID
@@ -31,7 +32,6 @@ logoutBtn.addEventListener('click', () => {
 });
 
 searchUserInput.addEventListener('input', handleSearchInput);
-
 sendMessageButton.addEventListener('click', sendMessage);
 
 // Functions
@@ -132,9 +132,9 @@ function renderMessages(messages) {
     console.log('Rendering messages:', messages);
     chatMessages.innerHTML = '';
     messages.forEach((msg) => {
-        console.log('Rendering message:', msg);
+        const senderLabel = msg.sender_id === userId ? 'Me' : 'Them';
         const messageDiv = document.createElement('div');
-        messageDiv.textContent = `${msg.sender_id === userId ? 'Me' : 'Them'}: ${msg.content}`;
+        messageDiv.textContent = `${senderLabel}: ${msg.content}`;
         chatMessages.appendChild(messageDiv);
     });
 }

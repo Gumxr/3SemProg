@@ -83,12 +83,12 @@ form.addEventListener('submit', async (e) => {
             if (response.ok) {
                 const data = await response.json();
 
-                // Store JWT token, user ID, passphrase, and private key in sessionStorage
+                // The server provides user.passphrase as the actual passphrase (salt)
                 sessionStorage.setItem('authToken', data.accessToken);
                 sessionStorage.setItem('userId', data.user.id);
                 sessionStorage.setItem('email', data.user.email);
-                sessionStorage.setItem('privateKey', data.privateKey); // Store private key
-                sessionStorage.setItem('passphrase', userData.password + userData.phone); // Example passphrase logic
+                sessionStorage.setItem('privateKey', data.privateKey); 
+                sessionStorage.setItem('passphrase', data.user.passphrase); // Store the server-provided passphrase
 
                 alert(`Signup successful! Welcome ${data.user.email}`);
                 window.location.href = "../index.html";
