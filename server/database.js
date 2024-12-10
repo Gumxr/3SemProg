@@ -2,11 +2,8 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const crypto = require('crypto');
 
-
-// Correct path to the private directory
 const dbPath = path.join(__dirname, '../private/chat_app.db');
 
-// Connect to the database
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Error connecting to the database:', err.message);
@@ -15,31 +12,85 @@ const db = new sqlite3.Database(dbPath, (err) => {
     }
 });
 
+// ------------------------- User Functions -------------------------
 function addUser(email, hashedPassword, phone, salt) {
     return new Promise((resolve, reject) => {
-        const query = `INSERT INTO users (email, password_hash, phone, salt) VALUES (?, ?, ?, ?)`;
-        const params = [email, hashedPassword, phone, salt];
+        // Generate RSA key pair for the user
+        const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+            modulusLength: 2048,
+            publicKeyEncoding: { type: 'spki', format: 'pem' },
+            privateKeyEncoding: {
+                type: 'pkcs8',
+                format: 'pem',
+                cipher: 'aes-256-cbc',
+                passphrase: salt,
+            },
+        });
 
-        console.log('Executing query:', query, 'with params:', params);
+        const query = `
+            INSERT INTO users (email, password_hash, phone, salt, public_key, private_key)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        const params = [email, hashedPassword, phone, salt, publicKey, privateKey];
 
         db.run(query, params, function (err) {
             if (err) {
                 console.error('Error inserting user:', err.message);
                 reject(err);
             } else {
-                console.log('User inserted with ID:', this.lastID);
                 resolve({ id: this.lastID });
             }
         });
     });
 }
 
-// Fetch users with optional search filter
-function getUsers(search) {
+function getUserById(userId) {
     return new Promise((resolve, reject) => {
-        let query = 'SELECT id, email FROM users WHERE email LIKE ?';
-        const params = [`${search}%`]; // Match emails starting with the search string
+        const query = `SELECT * FROM users WHERE id = ?`;
+        db.get(query, [userId], (err, row) => {
+            if (err) {
+                console.error('Error fetching user:', err.message);
+                reject(err);
+            } else if (!row) {
+                console.error('User not found for ID:', userId);
+                reject(new Error('User not found'));
+            } else {
+                resolve(row);
+            }
+        });
+    });
+}
 
+function verifyUser(email, password) {
+    return new Promise((resolve, reject) => {
+        const query = `SELECT id, email, password_hash, salt FROM users WHERE email = ?`;
+        db.get(query, [email], (err, row) => {
+            if (err) {
+                console.error('Error querying database:', err.message);
+                reject(err);
+            } else if (!row) {
+                console.error('User not found for email:', email);
+                reject(new Error('User not found'));
+            } else {
+                const hashedInputPassword = crypto
+                    .createHash('sha256')
+                    .update(password + row.salt)
+                    .digest('hex');
+
+                if (hashedInputPassword === row.password_hash) {
+                    resolve({ id: row.id, email: row.email, salt: row.salt });
+                } else {
+                    reject(new Error('Invalid password'));
+                }
+            }
+        });
+    });
+}
+
+function searchUsers(search) {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT id, email FROM users WHERE email LIKE ?';
+        const params = [`${search}%`];
         db.all(query, params, (err, rows) => {
             if (err) {
                 console.error('Error fetching users:', err.message);
@@ -51,6 +102,7 @@ function getUsers(search) {
     });
 }
 
+<<<<<<< Updated upstream
 function verifyUser(email, password) {
     return new Promise((resolve, reject) => {
         // Query to find the user by email
@@ -87,6 +139,9 @@ function verifyUser(email, password) {
         });
     });
 }
+=======
+// ------------------------- Chat Functions -------------------------
+>>>>>>> Stashed changes
 function getChats(userId) {
     return new Promise((resolve, reject) => {
         const query = `
@@ -126,6 +181,7 @@ function getChats(userId) {
     });
 }
 
+<<<<<<< Updated upstream
 function getMessages(chatId) {
     return new Promise((resolve, reject) => {
         const query = `
@@ -210,19 +266,93 @@ function getChatBetweenUsers(userOneId, userTwoId) {
                 reject(new Error('Failed to fetch chat.'));
             } else {
                 resolve(row); // Returns null if no match is found
+=======
+function createChat(userOneId, userTwoId) {
+    return new Promise((resolve, reject) => {
+        const checkQuery = `
+            SELECT id FROM chats
+            WHERE (user_one_id = ? AND user_two_id = ?) 
+            OR (user_one_id = ? AND user_two_id = ?)
+        `;
+        const checkParams = [userOneId, userTwoId, userTwoId, userOneId];
+
+        db.get(checkQuery, checkParams, (err, row) => {
+            if (err) {
+                console.error('Error checking for existing chat:', err.message);
+                reject(err);
+            } else if (row) {
+                resolve({ id: row.id });
+            } else {
+                const insertQuery = `
+                    INSERT INTO chats (user_one_id, user_two_id, last_message, last_timestamp, unread_count) 
+                    VALUES (?, ?, '', datetime('now'), 0)
+                `;
+                const insertParams = [userOneId, userTwoId];
+                db.run(insertQuery, insertParams, function (err) {
+                    if (err) {
+                        console.error('Error creating chat:', err.message);
+                        reject(err);
+                    } else {
+                        resolve({ id: this.lastID });
+                    }
+                });
+>>>>>>> Stashed changes
             }
         });
     });
 }
 
+// ------------------------- Message Functions -------------------------
+function getMessages(userId, contactId) {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT * FROM messages
+            WHERE (sender_id = ? AND receiver_id = ?)
+            OR (sender_id = ? AND receiver_id = ?)
+            ORDER BY timestamp ASC
+        `;
+        const params = [userId, contactId, contactId, userId];
+
+        db.all(query, params, (err, rows) => {
+            if (err) {
+                console.error('Error fetching messages:', err.message);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
+
+function sendMessage(senderId, receiverId, content) {
+    return new Promise((resolve, reject) => {
+        const query = `
+            INSERT INTO messages (sender_id, receiver_id, content, timestamp, is_read) 
+            VALUES (?, ?, ?, datetime('now'), false)
+        `;
+        const params = [senderId, receiverId, content];
+
+        db.run(query, params, function (err) {
+            if (err) {
+                console.error('Error saving message:', err.message);
+                reject(err);
+            } else {
+                resolve({ message: 'Message sent successfully' });
+            }
+        });
+    });
+}
 
 module.exports = {
     addUser,
-    getUsers,
+    getUserById,
     verifyUser,
+    searchUsers,
     getChats,
+    createChat,
     getMessages,
     sendMessage,
+<<<<<<< Updated upstream
     createChat,
     getChatBetweenUsers
 };
@@ -352,3 +482,6 @@ db.run(`ALTER TABLE users RENAME COLUMN password TO password_hash`, (err) => {
 });
  */
 
+=======
+};
+>>>>>>> Stashed changes
