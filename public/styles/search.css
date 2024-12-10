@@ -159,14 +159,10 @@ body {
 }
 .chat-item.selected {
     background-color: #f09bc1;
-    color: #1c1c1c;
-    font-weight: bold;
+  
 }
-
-
 .chat-item:hover {
-  background-color: #3e3e3e;
-  transform: scale(1.02);
+  transform: scale(1.015);
 }
 
 .chat-item .chat-email {
@@ -178,6 +174,12 @@ body {
   font-size: 0.9rem;
   color: #a5a5a5;
 }
+
+.chat-item.chat-item.selected .chat-message-preview {
+  font-size: 0.9rem;
+  color: #ffffff;
+}
+
 
 /* Error Message Styling */
 .error-message {

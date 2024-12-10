@@ -88,6 +88,7 @@ function updateSelectedChatHeader(email) {
 // Start a New Chat
 function startNewChat(receiverId) {
     chatMessages.innerHTML = ''; // Clear previous messages
+    updateSelectedChatHeader('Loading...');
     selectedChatId = null; // Reset the selected chat ID
 
     const existingChat = chats.find(chat =>
@@ -97,6 +98,15 @@ function startNewChat(receiverId) {
 
     if (existingChat) {
         selectedChatId = existingChat.id;
+
+        // Highlight the existing chat in the list
+        const allChatItems = document.querySelectorAll('.chat-item');
+        allChatItems.forEach(item => item.classList.remove('selected'));
+        const chatElement = [...allChatItems].find(item =>
+            item.querySelector('.chat-email').textContent === existingChat.other_user_email
+        );
+        if (chatElement) chatElement.classList.add('selected');
+
         updateSelectedChatHeader(selectedUserEmail);
         loadMessages(existingChat.id);
         return;
@@ -110,7 +120,7 @@ function startNewChat(receiverId) {
         },
         body: JSON.stringify({
             userOneId: sessionStorage.getItem('userId'),
-            userTwoId: receiverId,
+            userTwoId: receiverId
         })
     })
         .then(response => {
@@ -121,16 +131,24 @@ function startNewChat(receiverId) {
         })
         .then(chat => {
             console.log('Chat created:', chat);
-            selectedChatId = chat.id;
-            const emailToDisplay = chat.other_user_email || selectedUserEmail; // Use fallback
-            updateSelectedChatHeader(emailToDisplay); // Display the email
             chats.push(chat); // Add the new chat to the chats array
+            renderChatList(chats); // Re-render the chat list dynamically
+
+            // Highlight the newly created chat
+            const allChatItems = document.querySelectorAll('.chat-item');
+            const chatElement = [...allChatItems].find(item =>
+                item.querySelector('.chat-email').textContent === selectedUserEmail
+            );
+            if (chatElement) chatElement.classList.add('selected');
+
+            updateSelectedChatHeader(selectedUserEmail);
             loadMessages(chat.id); // Load the chat messages
         })
         .catch(error => {
             console.error('Error starting new chat:', error.message);
         });
 }
+
 
 // Fetch and Display Chats
 function fetchChats() {
@@ -169,15 +187,25 @@ function renderChatList(chats) {
             <div class="chat-message-preview">${chat.last_message || 'No messages yet'}</div>
         `;
 
-        // When clicking on a chat, update the selected user and load messages
+        // Add click event to update the selected chat and highlight it
         chatItem.addEventListener('click', () => {
-            updateSelectedChatHeader(chat.other_user_email); // Update the header
+            // Remove the 'selected' class from all chat items
+            const allChatItems = document.querySelectorAll('.chat-item');
+            allChatItems.forEach(item => item.classList.remove('selected'));
+
+            // Add the 'selected' class to the clicked chat
+            chatItem.classList.add('selected');
+
+            // Update the chat header and load messages
+            updateSelectedChatHeader(chat.other_user_email);
             loadMessages(chat.id);
         });
 
         chatList.appendChild(chatItem);
     });
 }
+
+
 
 function loadMessages(chatId) {
     selectedChatId = chatId;
