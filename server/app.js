@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const db = require('./database');
 const crypto = require('crypto');
+<<<<<<< Updated upstream
 const {
     addUser,
     getUsers,
@@ -12,85 +13,76 @@ const {
     getChatBetweenUsers,
 } = require('./database');
 const jwt = require('jsonwebtoken');
+=======
+const jwt = require('jsonwebtoken');
+const cors = require('cors');
+>>>>>>> Stashed changes
 require('dotenv').config();
 
 
 const app = express();
 const port = 3000;
 
+// Middleware
 app.use(express.static(path.join(__dirname, '../public')));
-app.use(express.json()); // Add this line at the top, before defining routes
+app.use(express.json());
+app.use(cors());
 
-console.log("app running")
-// Users Route
-
-
-// Fallback Route
-/*app.use((req, res) => {
-    res.status(404).json({ error: 'Route not found' });
-});*/
-
-
-// Start the server
 app.listen(port, '0.0.0.0', () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
 
-// Find users with optional search filter
-app.get('/users',authenticateToken, async (req, res) => {
+// ------------------------- Middleware -------------------------
+function authenticateToken(req, res, next) {
+    const token = req.headers['authorization']?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Token is missing' });
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+        if (err) {
+            console.error('JWT verification failed:', err.message);
+            return res.status(403).json({ error: 'Invalid or expired token' });
+        }
+        console.log('Decoded JWT payload:', user);
+        req.user = user;
+        next();
+    });
+}
+
+// ------------------------- User Routes -------------------------
+app.get('/users', authenticateToken, async (req, res) => {
     try {
-        const { search } = req.query; // Extract search parameter
-        let users;
-
-        if (search) {
-            console.log(`Searching users with query: ${search}`);
-            users = await db.getUsers(search); // Pass search query to the database function
-        } else {
-            users = []; // No results if no search is provided
-        }
-
-        if (users.length === 0) {
-            return res.status(200).json([]); // Return empty array for no results
-        }
-
-        // Filter out the phone numbers before sending the response
-        const filteredUsers = users.map(user => ({
-            id: user.id,
-            email: user.email
-        }));
-
-        res.status(200).json(filteredUsers);
+        const { search } = req.query;
+        const users = search ? await db.searchUsers(search) : [];
+        res.status(200).json(users.map((user) => ({ id: user.id, email: user.email })));
     } catch (error) {
         console.error('Error fetching users:', error.message);
         res.status(500).json({ error: 'Failed to fetch users' });
     }
 });
 
-// Check if email is valid, unique, and ends with @joejuice.com
 app.post('/validate-email', async (req, res) => {
     const { email } = req.body;
     if (!email) {
-        return res.status(400).json({ error: 'E-mail er påkrævet' });
+        return res.status(400).json({ error: 'E-mail is required' });
     }
+
     try {
-        // Check om email allerede findes i databasen
-        const existingUsers = await getUsers(email);
+        const existingUsers = await db.searchUsers(email);
         if (existingUsers.length > 0) {
-            return res.status(400).json({ error: 'E-mail findes allerede' });
+            return res.status(400).json({ error: 'E-mail already exists' });
         }
-        // Valider om email slutter med @joejuice.com
+
         if (!email.endsWith('@joejuice.com')) {
-            return res.status(400).json({ error: 'Kun arbejds-e-mails er tilladt' });
+            return res.status(400).json({ error: 'Only company emails are allowed' });
         }
-        // Hvis alt er korrekt
-        res.status(200).json({ message: 'E-mail er gyldig!' });
+
+        res.status(200).json({ message: 'E-mail is valid!' });
     } catch (error) {
-        console.error('Fejl ved validering af e-mail:', error.message);
-        res.status(500).json({ error: 'Serverfejl. Prøv igen senere.' });
+        console.error('Error validating email:', error.message);
+        res.status(500).json({ error: 'Server error. Try again later.' });
     }
 });
 
-// Create a new user
 app.post('/create-user', async (req, res) => {
     try {
         const { email, password, phone } = req.body;
@@ -107,15 +99,21 @@ app.post('/create-user', async (req, res) => {
         const hashedPassword = crypto.createHash('sha256').update(password + salt).digest('hex');
 
         const newUser = await db.addUser(email, hashedPassword, phone, salt);
+        const userDetails = await db.getUserById(newUser.id);
 
-        // Generate JWT token
-        const userPayload = { id: newUser.id, email: newUser.email };
+        if (!userDetails || !userDetails.private_key) {
+            return res.status(500).json({ error: 'Failed to retrieve private key after signup' });
+        }
+
+        // Include passphrase in JWT
+        const userPayload = { id: newUser.id, email: email, passphrase: salt };
         const accessToken = jwt.sign(userPayload, process.env.ACCESS_TOKEN_SECRET);
 
         res.status(201).json({
             message: 'User created successfully!',
             user: userPayload,
             accessToken: accessToken,
+            privateKey: userDetails.private_key,
         });
     } catch (err) {
         if (err.message.includes('UNIQUE constraint failed: users.email')) {
@@ -129,32 +127,49 @@ app.post('/create-user', async (req, res) => {
     }
 });
 
-// Login user
 app.post('/users/login', async (req, res) => {
-    console.log("handling users/login post request")
-    const { email, password } = req.body;
-
-    console.log("Received data: ", { email, password });
-
     try {
+        const { email, password } = req.body;
         const user = await db.verifyUser(email, password);
-        console.log("user verified:", user);
-        const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
-        res.status(200).json({message: "Login successful", user: user, accessToken: accessToken});
-    } catch (err) {
-        console.log('Error verifying user:', err.message);
-        res.status(401).json({ message: 'Invalid email or password' })
+        if (!user || !user.salt) {
+            throw new Error('Invalid email or password');
+        }
+
+        const userDetails = await db.getUserById(user.id);
+        if (!userDetails || !userDetails.private_key) {
+            throw new Error('Private key not found');
+        }
+
+        console.log('Salt retrieved during login:', user.salt);
+        console.log('Encrypted Private Key (from database):', userDetails.private_key);
+
+        // Include passphrase in JWT
+        const tokenPayload = { id: user.id, email: user.email, passphrase: user.salt };
+        const accessToken = jwt.sign(tokenPayload, process.env.ACCESS_TOKEN_SECRET);
+
+        res.status(200).json({
+            user: {
+                id: user.id,
+                email: user.email,
+                passphrase: user.salt,
+                encryptedPrivateKey: userDetails.private_key,
+            },
+            accessToken,
+        });
+    } catch (error) {
+        console.error('Error during login:', error.message);
+        res.status(401).json({ message: error.message });
     }
-})
+});
 
 app.get('/emailViaJWT', authenticateToken, (req, res) => {
     if (!req.user || !req.user.email) {
         return res.status(403).json({ error: 'Invalid token' });
     }
-
     res.status(200).json({ email: req.user.email });
 });
 
+<<<<<<< Updated upstream
 // middleware
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization']
@@ -179,6 +194,12 @@ app.get('/chats/:userId', authenticateToken, async (req, res) => {
     try {
         const chats = await getChats(userId);
         console.log('Fetched Chats:', chats); // Log the chats for debugging
+=======
+// ------------------------- Chat Routes -------------------------
+app.get('/chats/:userId', authenticateToken, async (req, res) => {
+    try {
+        const chats = await db.getChats(req.params.userId);
+>>>>>>> Stashed changes
         res.status(200).json(chats);
     } catch (error) {
         console.error('Error fetching chats:', error.message);
@@ -186,6 +207,7 @@ app.get('/chats/:userId', authenticateToken, async (req, res) => {
     }
 });
 
+<<<<<<< Updated upstream
 // Get messages for a specific chat
 app.get('/messages/:chatId', authenticateToken, async (req, res) => {
     const chatId = parseInt(req.params.chatId);
@@ -224,6 +246,14 @@ app.post('/messages', authenticateToken, async (req, res) => {
 
 //create a new chat
 app.post('/chats', async (req, res) => {
+=======
+app.post('/chats', authenticateToken, async (req, res) => {
+    const { userOneId, userTwoId } = req.body;
+    if (!userOneId || !userTwoId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+>>>>>>> Stashed changes
     try {
         const { userOneId, userTwoId } = req.body;
 
@@ -250,7 +280,185 @@ app.post('/chats', async (req, res) => {
     }
 });
 
+<<<<<<< Updated upstream
 
 app.use(express.json());
 
 // test 123
+=======
+// ------------------------- Message Routes -------------------------
+app.get("/messages/:contactId", authenticateToken, async (req, res) => {
+    const userId = req.user.id;
+    const contactId = parseInt(req.params.contactId, 10);
+
+    try {
+        const messages = await db.getMessages(userId, contactId);
+
+        if (!messages || messages.length === 0) {
+            return res.status(200).json([]);
+        }
+
+        const user = await db.getUserById(userId);
+        if (!user || !user.private_key) {
+            return res.status(404).json({ error: "User not found or missing private key" });
+        }
+
+        const decryptedMessages = messages.map((msg) => {
+            try {
+                const { encryptedMessage, encryptedAESKeyForReceiver, encryptedAESKeyForSender, iv } = JSON.parse(msg.content);
+
+                const ivBuffer = Buffer.from(iv, "base64");
+                const encryptedMessageBuffer = Buffer.from(encryptedMessage, "base64");
+
+                if (ivBuffer.length !== 16) throw new Error("Invalid IV length");
+
+                let usedEncryptedKey;
+                // Determine if current user is the receiver or the sender of this message
+                if (msg.receiver_id === userId && encryptedAESKeyForReceiver) {
+                    usedEncryptedKey = encryptedAESKeyForReceiver;
+                } else if (msg.sender_id === userId && encryptedAESKeyForSender) {
+                    usedEncryptedKey = encryptedAESKeyForSender;
+                } else {
+                    // Current user is neither the sender nor the receiver, or keys not available
+                    return { ...msg, content: "[Encrypted - not for you]" };
+                }
+
+                const aesKeyBuffer = Buffer.from(usedEncryptedKey, "base64");
+
+                const privateKeyObject = crypto.createPrivateKey({
+                    key: user.private_key,
+                    format: "pem",
+                    passphrase: req.user.passphrase,
+                });
+
+                const aesKey = crypto.privateDecrypt(
+                    {
+                        key: privateKeyObject,
+                        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+                    },
+                    aesKeyBuffer
+                );
+
+                const decipher = crypto.createDecipheriv("aes-256-cbc", aesKey, ivBuffer);
+                const decryptedMessage = Buffer.concat([
+                    decipher.update(encryptedMessageBuffer),
+                    decipher.final(),
+                ]).toString("utf8");
+
+                console.log("Decrypted Message:", decryptedMessage);
+                return { ...msg, content: decryptedMessage };
+            } catch (error) {
+                console.error("Error decrypting message:", error.message);
+                return { ...msg, content: "[Unable to decrypt message]", error: error.message };
+            }
+        });
+
+        res.status(200).json(decryptedMessages);
+    } catch (error) {
+        console.error("Error fetching messages:", error.message);
+        res.status(500).json({ error: "Failed to fetch messages" });
+    }
+});
+
+app.post("/messages", authenticateToken, async (req, res) => {
+    try {
+        const { senderId, receiverId, content } = req.body;
+
+        const sender = await db.getUserById(senderId);
+        if (!sender || !sender.public_key) {
+            throw new Error("Sender not found or missing public key");
+        }
+
+        const receiver = await db.getUserById(receiverId);
+        if (!receiver || !receiver.public_key) {
+            throw new Error("Receiver not found or missing public key");
+        }
+
+        // Generate AES key and IV
+        const aesKey = crypto.randomBytes(32);
+        const iv = crypto.randomBytes(16);
+
+        // Encrypt the message using AES
+        const cipher = crypto.createCipheriv("aes-256-cbc", aesKey, iv);
+        const encryptedMessage = Buffer.concat([
+            cipher.update(content, "utf8"),
+            cipher.final(),
+        ]).toString("base64");
+
+        console.log("Encrypted Message:", encryptedMessage);
+
+        // Encrypt AES key for receiver
+        const encryptedAESKeyForReceiver = crypto.publicEncrypt(
+            {
+                key: receiver.public_key,
+                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+            },
+            aesKey
+        ).toString("base64");
+
+        // Encrypt AES key for sender
+        const encryptedAESKeyForSender = crypto.publicEncrypt(
+            {
+                key: sender.public_key,
+                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+            },
+            aesKey
+        ).toString("base64");
+
+        console.log("Encrypted AES Key For Receiver:", encryptedAESKeyForReceiver);
+        console.log("Encrypted AES Key For Sender:", encryptedAESKeyForSender);
+        console.log("IV:", iv.toString("base64"));
+
+        // Save to database
+        const messagePayload = JSON.stringify({
+            encryptedMessage,
+            encryptedAESKeyForReceiver,
+            encryptedAESKeyForSender,
+            iv: iv.toString("base64"),
+        });
+        await db.sendMessage(senderId, receiverId, messagePayload);
+
+        res.status(201).json({ message: "Message sent successfully" });
+    } catch (error) {
+        console.error("Error sending message:", error.message);
+        res.status(500).json({ error: "Failed to send message", details: error.message });
+    }
+});
+
+app.post('/decrypt-private-key', async (req, res) => {
+    const { encryptedPrivateKey, passphrase } = req.body;
+    if (!encryptedPrivateKey || !passphrase) {
+        return res.status(400).json({ error: "Encrypted private key and passphrase are required" });
+    }
+
+    try {
+        const privateKeyObject = crypto.createPrivateKey({
+            key: encryptedPrivateKey,
+            format: "pem",
+            passphrase: passphrase,
+        });
+
+        const decryptedPrivateKey = privateKeyObject.export({
+            format: "pem",
+            type: "pkcs8",
+        });
+
+        console.log("Decrypted Private Key:", decryptedPrivateKey);
+        res.status(200).json({ decryptedPrivateKey });
+    } catch (error) {
+        console.error("Error decrypting private key:", error.message);
+        res.status(500).json({ error: "Failed to decrypt private key" });
+    }
+});
+
+// Global Error Handling
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        console.error('Bad JSON payload:', err.message);
+        return res.status(400).json({ error: 'Invalid JSON payload' });
+    }
+    next();
+});
+
+module.exports = app;
+>>>>>>> Stashed changes

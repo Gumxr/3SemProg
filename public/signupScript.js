@@ -64,19 +64,16 @@ form.addEventListener('submit', async (e) => {
             <button type="submit">Opret profil</button>
         `;
     } else if (currentStep === 3) {
-        // Step 3: Collect phone number
         const phone = document.getElementById('phone').value.trim();
 
-        // Validate phone number
         if (!/^\d{7,}$/.test(phone)) {
-            alert('Indtast et gyldigt telefonnummer! Minimum 7 cifre.');
-            return; // Stop form submission
+            alert('Enter a valid phone number with at least 7 digits.');
+            return;
         }
 
-        userData.phone = phone; // Store phone in userData
+        userData.phone = phone;
 
         try {
-            // Submit all data to backend
             const response = await fetch('/create-user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -84,30 +81,24 @@ form.addEventListener('submit', async (e) => {
             });
 
             if (response.ok) {
-                const responseData = await response.json();
-                console.log('Signup response:', responseData);
+                const data = await response.json();
 
-                // Store JWT token and user data in sessionStorage
-                if (responseData.accessToken) {
-                    sessionStorage.setItem('authToken', responseData.accessToken); // Store JWT token
-                    console.log("JWT token stored in sessionStorage:", responseData.accessToken);
-                }
+                // Store JWT token, user ID, passphrase, and private key in sessionStorage
+                sessionStorage.setItem('authToken', data.accessToken);
+                sessionStorage.setItem('userId', data.user.id);
+                sessionStorage.setItem('email', data.user.email);
+                sessionStorage.setItem('privateKey', data.privateKey); // Store private key
+                sessionStorage.setItem('passphrase', userData.password + userData.phone); // Example passphrase logic
 
-                if (responseData.user && responseData.user.id) {
-                    sessionStorage.setItem('userId', responseData.user.id); // Store user ID
-                    sessionStorage.setItem('email', responseData.user.email); // Store user email
-                    alert(`Signup successful! Welcome ${responseData.user.email}`);
-                    window.location.href = "../index.html"; // Redirect to homepage
-                } else {
-                    throw new Error('Signup failed: Missing user data');
-                }
+                alert(`Signup successful! Welcome ${data.user.email}`);
+                window.location.href = "../index.html";
             } else {
                 const errorData = await response.json();
-                alert(errorData.error || 'Kunne ikke oprette profil!');
+                alert(errorData.error || 'Could not create profile!');
             }
         } catch (error) {
             console.error('Error during profile creation:', error.message);
-            alert('Der opstod en fejl. Prøv igen senere.');
+            alert('An error occurred. Please try again later.');
         }
     }
 });
