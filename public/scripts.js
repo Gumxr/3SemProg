@@ -68,6 +68,11 @@ function renderUserList(userArray) {
         li.textContent = user.email;
         li.classList.add('user-item');
         li.addEventListener('click', () => {
+            console.log("user chosen:", user)
+            if (!user.email) {
+                console.error('User object does not contain email');
+                return;
+            }
             selectedUserEmail = user.email; // Update the selected user's email
             selectedUserId = user.id; // Set the user ID globally
             updateSelectedChatHeader(user.email); // Update the header
@@ -81,7 +86,7 @@ function renderUserList(userArray) {
 
 function updateSelectedChatHeader(email) {
     const selectedChatUserHeader = document.getElementById('selectedChatUser');
-    selectedChatUserHeader.textContent = `${email}`;
+    selectedChatUserHeader.textContent = `${email}` || 'Select a User';
 
 }
 
@@ -106,9 +111,11 @@ function startNewChat(receiverId) {
             item.querySelector('.chat-email').textContent === existingChat.other_user_email
         );
         if (chatElement) chatElement.classList.add('selected');
-
+        
+        console.log("chat exists. Selected user Email:", selectedUserEmail)
         updateSelectedChatHeader(selectedUserEmail);
         loadMessages(existingChat.id);
+        fetchChats();
         return;
     }
 
@@ -141,8 +148,10 @@ function startNewChat(receiverId) {
             );
             if (chatElement) chatElement.classList.add('selected');
 
+            console.log("chat doesn't exist. Selected user Email:", selectedUserEmail)
             updateSelectedChatHeader(selectedUserEmail);
             loadMessages(chat.id); // Load the chat messages
+            fetchChats();
         })
         .catch(error => {
             console.error('Error starting new chat:', error.message);
@@ -181,6 +190,7 @@ function renderChatList(chats) {
         const chatItem = document.createElement('div');
         chatItem.classList.add('chat-item');
 
+        console.log("chat.other_user_email:", chat.other_user_email);
         // Display the other user's email and the last message
         chatItem.innerHTML = `
             <div class="chat-email">${chat.other_user_email}</div>
