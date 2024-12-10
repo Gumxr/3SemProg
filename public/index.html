@@ -3,44 +3,63 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="./styles/global.css">
+  <title>Joe and The Juice - Internal Communication</title>
   <link rel="stylesheet" href="./styles/search.css">
-  <title>Joe and The Juice - internal communication</title>
 </head>
 
 <body>
-  <ul>
-    <li><img src="./img/joeLogo.svg" alt="Logo"></li>
-    <li><a href="/" class="active">Home</a></li>
-    <li><a href="/start.html" class="active" id="logoutBtn">Log out</a></li> <!-- logger ikk ud --> 
+  <!-- Navbar -->
+  <ul class="navbar">
+    <li>
+      <img src="./img/joeLogo.svg" alt="Joe and The Juice Logo" class="logo">
+    </li>
+    <li><a href="/" class="nav-link">Home</a></li>
+    <li><a href="/start.html" id="logoutBtn" class="nav-link">Log Out</a></li>
   </ul>
 
+  <!-- Main App Container -->
+  <div class="app-container">
+      <!-- Sidebar for Search and Chat List -->
+    <aside class="sidebar">
+      <!-- Search Container -->
+      <div class="search-container">
+        <h2 id="selectedUserHeader">Search Users</h2>
+        <input type="text" id="searchUserInput" placeholder="Search for a user" />
+        <ul id="userList" class="user-list">
+          <!-- Dynamically populated user results -->
+        </ul>
+      </div>
+      <div id="chatList" class="chat-list">
+        <!-- List of chats will be dynamically loaded here -->
+      </div>
+    </aside>
 
-   <div class="search-container">
-        <h2>Search Users</h2>
-        <input type="text" id="searchUserInput" placeholder="Search for a user">
-        <li class="user-list" id="userList">
-            <!-- Filtered user results will appear here dynamically -->
-        </li>
-    </div>
+    <!-- Main Chat Area -->
+    <main class="main-chat">
+      <!-- Chat Header -->
+      <header class="chat-header">
+        <h2 id="selectedChatUser">Select a User</h2>
+      </header>
 
-    <div class="chat-container">
-      <h2>Chat</h2>
-      <!-- Chat messages area -->
+      <!-- Chat Messages -->
       <div class="chat-messages" id="chatMessages">
-          <!-- Messages will appear dynamically here -->
+        <!-- Dynamically loaded messages -->
       </div>
-  
-      <!-- Chat input area -->
+
+      <!-- Chat Input -->
       <div class="chat-input-container">
-          <input type="text" id="chatInput" placeholder="Type your message..." />
-          <button id="sendMessageButton">Send</button>
+        <input type="text" id="chatInput" placeholder="Type your message..." />
+        <button id="sendMessageButton" class="send-btn">
+          <svg viewBox="0 0 24 24" class="icon">
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+          </svg>
+        </button>
       </div>
+    </main>
   </div>
-  
-  
-  
-<script src="./scripts.js"></script> 
+
+  <script src="./scripts.js"></script>
+</body>
+
 </html>
