@@ -2,23 +2,9 @@ const express = require('express');
 const path = require('path');
 const db = require('./database');
 const crypto = require('crypto');
-<<<<<<< Updated upstream
-const {
-    addUser,
-    getUsers,
-    getChats,
-    getMessages,
-    sendMessage,
-    createChat,
-    getChatBetweenUsers,
-} = require('./database');
-const jwt = require('jsonwebtoken');
-=======
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
->>>>>>> Stashed changes
 require('dotenv').config();
-
 
 const app = express();
 const port = 3000;
@@ -169,37 +155,10 @@ app.get('/emailViaJWT', authenticateToken, (req, res) => {
     res.status(200).json({ email: req.user.email });
 });
 
-<<<<<<< Updated upstream
-// middleware
-function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization']
-    const token = authHeader && authHeader.split(' ')[1] // because authHeader = 'Bearer TOKEN'
-    if (token == null) return res.sendStatus(401);
-    
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-        if (err) return res.sendStatus(403)
-        req.user = user
-        next()
-    })
-}
-app.get('/chats/:userId', authenticateToken, async (req, res) => {
-    const userId = parseInt(req.params.userId);
-
-    console.log('Fetching chats for userId:', userId);
-
-    if (!userId) {
-        return res.status(400).json({ error: 'Missing user ID' });
-    }
-
-    try {
-        const chats = await getChats(userId);
-        console.log('Fetched Chats:', chats); // Log the chats for debugging
-=======
 // ------------------------- Chat Routes -------------------------
 app.get('/chats/:userId', authenticateToken, async (req, res) => {
     try {
         const chats = await db.getChats(req.params.userId);
->>>>>>> Stashed changes
         res.status(200).json(chats);
     } catch (error) {
         console.error('Error fetching chats:', error.message);
@@ -207,85 +166,21 @@ app.get('/chats/:userId', authenticateToken, async (req, res) => {
     }
 });
 
-<<<<<<< Updated upstream
-// Get messages for a specific chat
-app.get('/messages/:chatId', authenticateToken, async (req, res) => {
-    const chatId = parseInt(req.params.chatId);
-    console.log('Fetching messages for chatId:', chatId); // Debugging
-
-    if (!chatId) {
-        return res.status(400).json({ error: 'Missing chat ID' });
-    }
-
-    try {
-        const messages = await getMessages(chatId);
-        console.log('Messages fetched:', messages); // Debugging
-        res.status(200).json(messages);
-    } catch (error) {
-        console.error('Error fetching messages:', error.message); // Log the error
-        res.status(500).json({ error: 'Failed to fetch messages' });
-    }
-});
-
-// Send a message
-app.post('/messages', authenticateToken, async (req, res) => {
-    const { senderId, receiverId, content, chatId } = req.body;
-
-    if (!senderId || !receiverId || !content || !chatId) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    try {
-        await db.sendMessage(senderId, receiverId, content, chatId);
-        res.status(201).json({ message: 'Message sent successfully' });
-    } catch (error) {
-        console.error('Error sending message:', error.message);
-        res.status(500).json({ error: 'Failed to send message' });
-    }
-});
-
-//create a new chat
-app.post('/chats', async (req, res) => {
-=======
 app.post('/chats', authenticateToken, async (req, res) => {
     const { userOneId, userTwoId } = req.body;
     if (!userOneId || !userTwoId) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
->>>>>>> Stashed changes
     try {
-        const { userOneId, userTwoId } = req.body;
-
-        console.log('Received POST /chats', { userOneId, userTwoId });
-
-        if (!userOneId || !userTwoId) {
-            console.log('Missing fields in request body');
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-
-        const existingChat = await db.getChatBetweenUsers(userOneId, userTwoId);
-
-        if (existingChat) {
-            console.log('Chat already exists:', existingChat);
-            return res.status(200).json(existingChat);
-        }
-
-        const newChat = await db.createChat(userOneId, userTwoId);
-        console.log('New chat created:', newChat);
-        return res.status(201).json(newChat);
-    } catch (err) {
-        console.error('Error creating chat:', err.message);
-        return res.status(500).json({ error: 'Failed to create chat' });
+        const chat = await db.createChat(userOneId, userTwoId);
+        res.status(201).json(chat);
+    } catch (error) {
+        console.error('Error creating chat:', error.message);
+        res.status(500).json({ error: 'Failed to create chat' });
     }
 });
 
-<<<<<<< Updated upstream
-
-app.use(express.json());
-
-// test 123
-=======
 // ------------------------- Message Routes -------------------------
 app.get("/messages/:contactId", authenticateToken, async (req, res) => {
     const userId = req.user.id;
@@ -461,4 +356,3 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
->>>>>>> Stashed changes
