@@ -86,7 +86,6 @@ function renderUserList(userArray) {
         li.addEventListener('click', () => {
             console.log('Starting chat with user ID:', user.id);
             startChat(user.id, user.email); // Pass user email to startChat
-            alert('You started a Chat with ' + user.email);
             userList.innerHTML = '';
             searchUserInput.value = user.email;
         });
@@ -192,32 +191,61 @@ function sendMessage() {
 // Load previous chats for the user
 function loadPreviousChats() {
     console.log('Loading previous chats for user ID:', userId);
+
     fetch(`/chats/${userId}`, {
+        method: 'GET',
         headers: { Authorization: `Bearer ${authToken}` },
     })
-        .then((response) => {
+        .then(response => {
             if (!response.ok) throw new Error('Failed to fetch chats');
             return response.json();
         })
-        .then((chats) => {
+        .then(chats => {
             console.log('Fetched chats:', chats);
-            chatMessages.innerHTML = '';
+
+            // Clear the chat list
+            chatList.innerHTML = '';
+
             if (!chats || chats.length === 0) {
-                chatMessages.innerHTML = '<div>No previous chats available</div>';
+                // No previous chats available
+                chatList.innerHTML = '<div class="error-message">No previous chats available</div>';
                 return;
             }
 
-            chats.forEach((chat) => {
+            // Render each chat
+            chats.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.classList.add('chat-item');
+
+                // Determine the other user's ID and email
                 const contactId = chat.user_two_id === userId ? chat.user_one_id : chat.user_two_id;
-                console.log('Rendering chat with contact ID:', contactId);
-                const chatElement = document.createElement('div');
-                chatElement.innerHTML = `
-                    <h3>Chat with User ID: ${contactId}</h3>
-                    <p>Last Message: ${chat.last_message}</p>
+                const otherUserEmail = chat.other_user_email || `User ID: ${contactId}`; // Fallback for email
+
+                console.log("Rendering chat with contact ID:", contactId);
+
+                // Create the chat item HTML
+                chatItem.innerHTML = `
+                    <div class="chat-email">${otherUserEmail}</div>
+                    <div class="chat-message-preview">${chat.last_message || 'No messages yet'}</div>
                 `;
-                chatElement.addEventListener('click', () => startChat(contactId));
-                chatMessages.appendChild(chatElement);
+
+                // Add click event to select and load the chat
+                chatItem.addEventListener('click', () => {
+                    // Remove the 'selected' class from all chat items
+                    document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('selected'));
+
+                    // Highlight the selected chat
+                    chatItem.classList.add('selected');
+
+                    // Update the chat header and load messages
+                    updateChatTitle(email); // Update the chat header with the selected user's email
+                    loadMessages(currentChatId);
+                });
+
+                // Append the chat item to the chat list
+                chatList.appendChild(chatItem);
             });
         })
-        .catch((error) => console.error('Error loading chats:', error));
+        .catch(error => console.error('Error loading chats:', error));
 }
+
