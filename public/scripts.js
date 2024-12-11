@@ -6,11 +6,12 @@ const chatMessages = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
 const sendMessageButton = document.getElementById('sendMessageButton');
 const logoutBtn = document.getElementById('logoutBtn');
+const authToken = sessionStorage.getItem('authToken');
+const userId = parseInt(sessionStorage.getItem('userId'), 10);
 
 // Global Variables
 let currentChatId = null; // Store the current chat ID
-const authToken = sessionStorage.getItem('authToken');
-const userId = parseInt(sessionStorage.getItem('userId'), 10);
+let ws; // WebSocket variable
 
 // Authentication Validation
 if (!authToken) {
@@ -23,8 +24,6 @@ if (isNaN(userId)) {
 }
 
 // Event Listeners
-document.addEventListener('DOMContentLoaded', loadPreviousChats);
-
 logoutBtn.addEventListener('click', () => {
     console.log('Logging out, clearing session.');
     sessionStorage.clear();
@@ -34,43 +33,42 @@ logoutBtn.addEventListener('click', () => {
 searchUserInput.addEventListener('input', handleSearchInput);
 sendMessageButton.addEventListener('click', sendMessage);
 
-// WebSocket
-let ws;
+// WebSocket message handler
+function onWebSocketMessage(event) {
+    const data = JSON.parse(event.data);
+    console.log('Received WebSocket message:', data);
 
+    if (data.type === 'new-message') {
+        const { senderId, receiverId, content } = data.message;
+        
+        // Check if this message belongs to the currently selected chat.
+        if (receiverId === currentChatId || senderId === currentChatId) {
+            // Append the new message to the chat UI without reloading messages.
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(
+                senderId === userId ? 'message-sent' : 'message-received'
+            );
+            messageDiv.textContent = content;
+            chatMessages.appendChild(messageDiv);
+
+            // Scroll to the bottom to show the new message.
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
+}
+
+// On DOM content loaded, set up WebSocket and load previous chats
 document.addEventListener('DOMContentLoaded', () => {
-    if (sessionStorage.getItem('authToken')) {
-        ws = new WebSocket('wss://joechat.tech'); // or 'ws://joechat.tech' if not using HTTPS
+    // Set up WebSocket if authenticated
+    if (authToken) {
+        ws = new WebSocket('wss://joechat.tech'); // Use ws:// if not using HTTPS
 
         ws.onopen = () => {
             console.log('WebSocket connection established');
         };
 
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            console.log('Received WebSocket message:', data);
-
-            if (data.type === 'new-message') {
-                const { senderId, receiverId, content } = data.message;
-                
-                // Check if this message belongs to the currently selected chat.
-                // Make sure 'currentChatId' is correctly set whenever the user selects a chat.
-                if (receiverId === currentChatId || senderId === currentChatId) {
-                    // Append the new message to the chat UI without reloading messages.
-                    const messageDiv = document.createElement('div');
-                    messageDiv.classList.add('message');
-                    messageDiv.classList.add(
-                        senderId === parseInt(sessionStorage.getItem('userId'))
-                            ? 'message-sent'
-                            : 'message-received'
-                    );
-                    messageDiv.textContent = content;
-                    chatMessages.appendChild(messageDiv);
-
-                    // Scroll to the bottom to show the new message.
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }
-            }
-        };
+        ws.onmessage = onWebSocketMessage;
 
         ws.onerror = (err) => {
             console.error('WebSocket error:', err);
@@ -80,8 +78,10 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('WebSocket connection closed');
         };
     }
-});
 
+    // Load previous chats after setting up WebSocket
+    loadPreviousChats();
+});
 
 // Functions
 
@@ -143,19 +143,17 @@ function renderUserList(userArray) {
 }
 
 // Start a chat with a specific user
-function startChat(receiverId, email) {
+function startChat(receiverId, contactEmail) {
     console.log('Starting chat with receiver ID:', receiverId);
-    currentChatId = receiverId; // Make sure this sets correctly
-
-    updateChatTitle(email);
+    currentChatId = receiverId;
+    updateChatTitle(contactEmail);
     loadMessages(receiverId);
 }
 
-
 // Function to update the chat title
 function updateChatTitle(email) {
-    const chatTitle = document.getElementById('selectedChatUser'); // Target the <h2> element
-    chatTitle.textContent = email || 'Select User'; // Set email or default text
+    const chatTitle = document.getElementById('selectedChatUser');
+    chatTitle.textContent = email || 'Select User';
 }
 
 // Load chat messages for a specific user
@@ -185,20 +183,17 @@ async function loadMessages(contactId) {
     }
 }
 
-
 // Render messages in the chat UI
 function renderMessages(messages) {
-    chatMessages.innerHTML = ''; 
+    chatMessages.innerHTML = '';
 
     messages.forEach(message => {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message');
         messageDiv.classList.add(
-            message.sender_id === parseInt(sessionStorage.getItem('userId'))
-                ? 'message-sent'
-                : 'message-received'
+            message.sender_id === userId ? 'message-sent' : 'message-received'
         );
-        messageDiv.textContent = message.content; // Display the message content
+        messageDiv.textContent = message.content; 
         chatMessages.appendChild(messageDiv);
     });
 
@@ -232,6 +227,7 @@ function sendMessage() {
             if (!response.ok) throw new Error('Failed to send message');
             console.log('Message sent successfully.');
             chatInput.value = '';
+            // Do not reload messages here; rely on WebSockets to show the new message.
         })
         .catch((error) => {
             console.error('Error sending message:', error);
@@ -257,7 +253,6 @@ function loadPreviousChats() {
             chatList.innerHTML = '';
 
             if (!chats || chats.length === 0) {
-                // No previous chats available
                 chatList.innerHTML = '<div class="error-message">No previous chats available</div>';
                 return;
             }
@@ -269,32 +264,28 @@ function loadPreviousChats() {
 
                 // Determine the other user's ID and email
                 const contactId = chat.user_two_id === userId ? chat.user_one_id : chat.user_two_id;
-                const otherUserEmail = chat.other_user_email || `User ID: ${contactId}`; // Fallback for email
+                const otherUserEmail = chat.other_user_email || `User ID: ${contactId}`;
 
                 console.log("Rendering chat with contact ID:", contactId);
 
-                // Create the chat item HTML
                 chatItem.innerHTML = `
                     <div class="chat-email">${otherUserEmail}</div>
                     <div class="chat-message-preview">${chat.last_message || 'No messages yet'}</div>
                 `;
 
-                // Add click event to select and load the chat
                 chatItem.addEventListener('click', () => {
-                    // Remove the 'selected' class from all chat items
+                    // Remove 'selected' class from all chat items
                     document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('selected'));
 
                     // Highlight the selected chat
                     chatItem.classList.add('selected');
 
-                    // Update the chat header and load messages
-                    updateChatTitle(email); // Update the chat header with the selected user's email
+                    // Start the chat with the selected user
+                    startChat(contactId, otherUserEmail);
                 });
 
-                // Append the chat item to the chat list
                 chatList.appendChild(chatItem);
             });
         })
         .catch(error => console.error('Error loading chats:', error));
 }
-
