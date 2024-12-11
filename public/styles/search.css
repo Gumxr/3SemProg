@@ -227,6 +227,7 @@ body {
   line-height: 1.4;
 }
 
+/* Sent messages */
 .message-sent {
   align-self: flex-end;
   background-color: #f09bc1;
@@ -234,12 +235,30 @@ body {
   border-bottom-right-radius: 0;
 }
 
+.message-sent .message-timestamp {
+  color: #1c1c1c; /* Matches the text color of sent messages */
+}
+
+/* Received messages */
 .message-received {
   align-self: flex-start;
   background-color: #2a2a2a;
   color: #f7f7f7;
   border-bottom-left-radius: 0;
 }
+
+.message-received .message-timestamp {
+  color: #f7f7f7; /* Matches the text color of received messages */
+}
+
+/* General timestamp styling */
+.message-timestamp {
+  font-size: 0.8em;
+  margin-top: 4px;
+  text-align: right; /* Aligns timestamp neatly */
+}
+
+
 
 /* Chat Input */
 .chat-input-container {

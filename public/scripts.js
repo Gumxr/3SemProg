@@ -183,7 +183,6 @@ async function loadMessages(contactId) {
     }
 }
 
-// Render messages in the chat UI
 function renderMessages(messages) {
     chatMessages.innerHTML = '';
 
@@ -193,7 +192,13 @@ function renderMessages(messages) {
         messageDiv.classList.add(
             message.sender_id === userId ? 'message-sent' : 'message-received'
         );
-        messageDiv.textContent = message.content; 
+
+        const timestamp = new Date(message.timestamp).toLocaleString(); // Format timestamp
+        messageDiv.innerHTML = `
+            <div class="message-content">${message.content}</div>
+            <div class="message-timestamp">${timestamp}</div>
+        `;
+
         chatMessages.appendChild(messageDiv);
     });
 
