@@ -174,6 +174,7 @@ function getMessages(userId, contactId) {
                 reject(err);
             } else {
                 resolve(rows);
+                console.log("rows:", rows)
             }
         });
     });
@@ -187,16 +188,119 @@ function sendMessage(senderId, receiverId, content) {
         `;
         const params = [senderId, receiverId, content];
 
+<<<<<<< HEAD
         db.run(query, params, function (err) {
             if (err) {
                 console.error('Error saving message:', err.message);
                 reject(err);
             } else {
                 resolve({ message: 'Message sent successfully' });
+=======
+        db.run(insertMessageQuery, params, function (err) {
+            if (err) {
+                console.error('Error inserting message:', err.message);
+                return reject(err);
+            }
+
+            // Check if the chat exists
+            const checkChatQuery = `
+                SELECT id FROM chats 
+                WHERE (user_one_id = ? AND user_two_id = ?) 
+                OR (user_one_id = ? AND user_two_id = ?)
+            `;
+            const checkParams = [senderId, receiverId, receiverId, senderId];
+
+            db.get(checkChatQuery, checkParams, (err, row) => {
+                if (err) {
+                    console.error('Error checking chat:', err.message);
+                    return reject(err);
+                }
+
+                if (row) {
+                    // Chat exists, update it
+                    const updateChatQuery = `
+                        UPDATE chats 
+                        SET last_message = ?, last_timestamp = datetime('now'), unread_count = unread_count + 1 
+                        WHERE id = ?
+                    `;
+                    const updateParams = [content, row.id];
+
+                    db.run(updateChatQuery, updateParams, function (err) {
+                        if (err) {
+                            console.error('Error updating chat:', err.message);
+                            return reject(err);
+                        }
+                        resolve(); // Message sent and chat updated
+                    });
+                } else {
+                    // Chat does not exist, create it
+                    const createChatQuery = `
+                        INSERT INTO chats (user_one_id, user_two_id, last_message, last_timestamp, unread_count) 
+                        VALUES (?, ?, ?, datetime('now'), 1)
+                    `;
+                    const createParams = [senderId, receiverId, content];
+
+                    db.run(createChatQuery, createParams, function (err) {
+                        if (err) {
+                            console.error('Error creating chat:', err.message);
+                            return reject(err);
+                        }
+                        resolve(); // Message sent and chat created
+                    });
+                }
+            });
+        });
+    });
+}
+
+
+function createChat(userOneId, userTwoId) {
+    return new Promise((resolve, reject) => {
+        // Step 1: Check if the chat already exists
+        const checkQuery = `
+            SELECT id FROM chats
+            WHERE (user_one_id = ? AND user_two_id = ?) 
+            OR (user_one_id = ? AND user_two_id = ?)
+        `;
+        const checkParams = [userOneId, userTwoId, userTwoId, userOneId];
+
+        console.log("Checking for existing chat with query:", checkQuery, "and params:", checkParams);
+
+        db.get(checkQuery, checkParams, (err, row) => {
+            if (err) {
+                console.error('Error checking for existing chat:', err.message);
+                reject(err);
+            } else {
+                // If a chat already exists, return the existing chat ID
+                if (row) {
+                    console.log('Chat already exists with ID:', row.id);
+                    resolve({ id: row.id });
+                } else {
+                    // Step 2: Create a new chat if it doesn't exist
+                    const insertQuery = `
+                        INSERT INTO chats (user_one_id, user_two_id, last_message, last_timestamp, unread_count) 
+                        VALUES (?, ?, '', datetime('now'), 0)
+                    `;
+                    const insertParams = [userOneId, userTwoId];
+
+                    console.log("Creating new chat with query:", insertQuery, "and params:", insertParams);
+
+                    db.run(insertQuery, insertParams, function (err) {
+                        if (err) {
+                            console.error('Error creating chat:', err.message);
+                            reject(err);
+                        } else {
+                            console.log('New chat created with ID:', this.lastID);
+                            resolve({ id: this.lastID });
+                        }
+                    });
+                }
+>>>>>>> main
             }
         });
     });
 }
+
 
 module.exports = {
     addUser,
