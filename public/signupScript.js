@@ -74,31 +74,76 @@ form.addEventListener('submit', async (e) => {
         userData.phone = phone;
 
         try {
-            const response = await fetch('/create-user', {
+            const response = await fetch('/authenticate-number', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userData),
+                body: JSON.stringify({ phone: userData.phone }),
             });
 
             if (response.ok) {
-                const data = await response.json();
-
-                // The server provides user.passphrase as the actual passphrase (salt)
-                sessionStorage.setItem('authToken', data.accessToken);
-                sessionStorage.setItem('userId', data.user.id);
-                sessionStorage.setItem('email', data.user.email);
-                sessionStorage.setItem('privateKey', data.privateKey); 
-                sessionStorage.setItem('passphrase', data.user.passphrase); // Store the server-provided passphrase
-
-                alert(`Signup successful! Welcome ${data.user.email}`);
-                window.location.href = "../index.html";
+                // Move to Step 4: Confirmation code input
+                currentStep++;
+                stepTitle.textContent = 'Step 4: Enter Confirmation Code';
+                form.innerHTML = `
+                    <input type="text" id="confirmationCode" placeholder="Confirmation Code" required />
+                    <button type="submit">Verify</button>
+                `;
             } else {
                 const errorData = await response.json();
-                alert(errorData.error || 'Could not create profile!');
+                alert(errorData.error || 'Failed to send confirmation code.');
             }
-        } catch (error) {
-            console.error('Error during profile creation:', error.message);
+        } catch(error) {
+            console.error('Error during phone number authentication:', error.message);
             alert('An error occurred. Please try again later.');
         }
+
+    } else if (currentStep === 4) {
+        const confirmationCode = document.getElementById('confirmationCode').value.trim();
+
+        try {
+            const response = await fetch('/verify-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: userData.phone, code: confirmationCode }),
+            });
+    
+            if (response.ok) {
+                // Phone number verified, proceed to profile creation
+                try {
+                    const response = await fetch('/create-user', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(userData),
+                    });
+        
+                    if (response.ok) {
+                        const data = await response.json();
+        
+                        // The server provides user.passphrase as the actual passphrase (salt)
+                        sessionStorage.setItem('authToken', data.accessToken);
+                        sessionStorage.setItem('userId', data.user.id);
+                        sessionStorage.setItem('email', data.user.email);
+                        sessionStorage.setItem('privateKey', data.privateKey); 
+                        sessionStorage.setItem('passphrase', data.user.passphrase); // Store the server-provided passphrase
+        
+                        alert(`Signup successful! Welcome ${data.user.email}`);
+                        window.location.href = "../index.html";
+                    } else {
+                        const errorData = await response.json();
+                        alert(errorData.error || 'Could not create profile!');
+                    }
+                } catch (error) {
+                    console.error('Error during profile creation:', error.message);
+                    alert('An error occurred. Please try again later.');
+                }
+            } else {
+                const errorData = await response.json();
+                alert(errorData.error || 'Invalid confirmation code.');
+            }
+        } catch (error) {
+            console.error('Error verifying confirmation code:', error.message);
+            alert('An error occurred. Please try again later.');
+        }
+
     }
 });

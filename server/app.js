@@ -7,6 +7,7 @@ const cors = require('cors');
 const http = require('http');
 const { WebSocketServer } = require('ws');
 require('dotenv').config();
+const twilio = require("twilio");
 
 const app = express();
 const port = 3000;
@@ -88,6 +89,73 @@ app.post('/validate-email', async (req, res) => {
     } catch (error) {
         console.error('Error validating email:', error.message);
         res.status(500).json({ error: 'Server error. Try again later.' });
+    }
+});
+
+const codes = {}; // Temporary in-memory storage for codes
+
+app.post('/authenticate-number', async (req, res) => {
+    const { phone } = req.body;
+    const number = phone;
+    console.log(number)
+    // Validate input
+    if (!number || number.length < 8) {
+        return res.status(400).json({ error: "Invalid phone number" });
+    }
+
+    // Twilio API nøgler
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const client = twilio(accountSid, authToken);
+
+    try {
+        // Generate 4-digit code
+        const code = Math.floor(1000 + Math.random() * 9000);
+
+        // Store the code temporarily
+        codes[number] = { code, expiresAt: Date.now() + 5 * 60 * 1000 }; // 5 minutes expiry
+
+        // Send SMS
+        const message = await client.messages.create({
+            from: "+14435438666",
+            to: `+45${number}`,
+            body: `Din bekræftelseskode er ${code}`,
+        });
+
+        res.status(200).json({ message: "Confirmation code sent!" });
+    } catch (error) {
+        console.error("Error sending message:", error);
+        res.status(500).json({ error: "Failed to send confirmation code" });
+    }
+});
+
+app.post('/verify-code', (req, res) => {
+    const { phone, code } = req.body;
+    const number = phone;
+
+    // Validate input
+    if (!number || !code) {
+        return res.status(400).json({ error: "Phone number and code are required" });
+    }
+
+    const storedCode = codes[number];
+
+    if (!storedCode) {
+        return res.status(400).json({ error: "No code found for this number" });
+    }
+
+    // Check if the code has expired
+    if (Date.now() > storedCode.expiresAt) {
+        delete codes[number]; // Clean up expired code
+        return res.status(400).json({ error: "Code has expired" });
+    }
+
+    // Check if the code matches
+    if (storedCode.code.toString() === code.toString()) {
+        delete codes[number]; // Clean up after successful verification
+        res.status(200).json({ message: "Phone number verified successfully!" });
+    } else {
+        res.status(400).json({ error: "Invalid code" });
     }
 });
 
