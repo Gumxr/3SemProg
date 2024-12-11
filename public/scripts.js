@@ -38,11 +38,9 @@ sendMessageButton.addEventListener('click', sendMessage);
 let ws;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Only connect after the user is logged in and authToken is available
     if (sessionStorage.getItem('authToken')) {
-        // Use wss if you have SSL enabled, otherwise ws
-        ws = new WebSocket('wss://joechat.tech');
-        
+        ws = new WebSocket('wss://joechat.tech'); // or 'ws://joechat.tech' if not using HTTPS
+
         ws.onopen = () => {
             console.log('WebSocket connection established');
         };
@@ -52,16 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Received WebSocket message:', data);
 
             if (data.type === 'new-message') {
-                // A new message has arrived from another user
-                // If the new message's receiver or sender is part of the current chat, update the UI
-                
-                // Check if the message belongs to the currently opened chat
-                // data.message should contain at least senderId, receiverId, and content
                 const { senderId, receiverId, content } = data.message;
-
-                // If this message involves the current chat participant
+                
+                // Check if this message belongs to the currently selected chat.
+                // Make sure 'currentChatId' is correctly set whenever the user selects a chat.
                 if (receiverId === currentChatId || senderId === currentChatId) {
-                    // Append the new message to the chat UI
+                    // Append the new message to the chat UI without reloading messages.
                     const messageDiv = document.createElement('div');
                     messageDiv.classList.add('message');
                     messageDiv.classList.add(
@@ -72,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     messageDiv.textContent = content;
                     chatMessages.appendChild(messageDiv);
 
-                    // Scroll to bottom
+                    // Scroll to the bottom to show the new message.
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
             }
@@ -84,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ws.onclose = () => {
             console.log('WebSocket connection closed');
-            // You could attempt to reconnect here if desired
         };
     }
 });
@@ -152,10 +145,12 @@ function renderUserList(userArray) {
 // Start a chat with a specific user
 function startChat(receiverId, email) {
     console.log('Starting chat with receiver ID:', receiverId);
-    currentChatId = receiverId;
-    updateChatTitle(email); // Update the chat header with the selected user's email
-    loadMessages(receiverId); // Load messages for the selected chat
+    currentChatId = receiverId; // Make sure this sets correctly
+
+    updateChatTitle(email);
+    loadMessages(receiverId);
 }
+
 
 // Function to update the chat title
 function updateChatTitle(email) {
@@ -237,7 +232,6 @@ function sendMessage() {
             if (!response.ok) throw new Error('Failed to send message');
             console.log('Message sent successfully.');
             chatInput.value = '';
-            loadMessages(currentChatId);
         })
         .catch((error) => {
             console.error('Error sending message:', error);
@@ -295,7 +289,6 @@ function loadPreviousChats() {
 
                     // Update the chat header and load messages
                     updateChatTitle(email); // Update the chat header with the selected user's email
-                    loadMessages(currentChatId);
                 });
 
                 // Append the chat item to the chat list
