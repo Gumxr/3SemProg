@@ -85,7 +85,8 @@ function renderUserList(userArray) {
         li.textContent = user.email;
         li.addEventListener('click', () => {
             console.log('Starting chat with user ID:', user.id);
-            startChat(user.id);
+            startChat(user.id, user.email); // Pass user email to startChat
+            alert('You started a Chat with ' + user.email);
             userList.innerHTML = '';
             searchUserInput.value = user.email;
         });
@@ -94,10 +95,17 @@ function renderUserList(userArray) {
 }
 
 // Start a chat with a specific user
-function startChat(receiverId) {
+function startChat(receiverId, email) {
     console.log('Starting chat with receiver ID:', receiverId);
     currentChatId = receiverId;
-    loadMessages(receiverId);
+    updateChatTitle(email); // Update the chat header with the selected user's email
+    loadMessages(receiverId); // Load messages for the selected chat
+}
+
+// Function to update the chat title
+function updateChatTitle(email) {
+    const chatTitle = document.getElementById('selectedChatUser'); // Target the <h2> element
+    chatTitle.textContent = email || 'Select User'; // Set email or default text
 }
 
 // Load chat messages for a specific user
@@ -127,16 +135,25 @@ async function loadMessages(contactId) {
     }
 }
 
+
 // Render messages in the chat UI
 function renderMessages(messages) {
-    console.log('Rendering messages:', messages);
-    chatMessages.innerHTML = '';
-    messages.forEach((msg) => {
-        const senderLabel = msg.sender_id === userId ? 'Me' : 'Them';
+    chatMessages.innerHTML = ''; 
+
+    messages.forEach(message => {
         const messageDiv = document.createElement('div');
-        messageDiv.textContent = `${senderLabel}: ${msg.content}`;
+        messageDiv.classList.add('message');
+        messageDiv.classList.add(
+            message.sender_id === parseInt(sessionStorage.getItem('userId'))
+                ? 'message-sent'
+                : 'message-received'
+        );
+        messageDiv.textContent = message.content; // Display the message content
         chatMessages.appendChild(messageDiv);
     });
+
+    // Scroll to the bottom to show the latest messages
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 // Send a new message
