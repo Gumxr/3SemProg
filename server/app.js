@@ -4,6 +4,8 @@ const db = require('./database');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const http = require('http');
+const { WebSocketServer } = require('ws');
 require('dotenv').config();
 
 const app = express();
@@ -14,9 +16,29 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.json());
 app.use(cors());
 
-app.listen(port, '0.0.0.0', () => {
+// Create an HTTP server from the Express app
+const server = http.createServer(app);
+server.listen(port, '0.0.0.0', () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
+
+// Create a WebSocket server
+const wss = new WebSocketServer({ server });
+wss.on('connection', (ws) => {
+    console.log('New WebSocket client connected');
+    // Optionally send a welcome message
+    ws.send(JSON.stringify({ type: 'welcome', message: 'Connected to WebSocket!' }));
+});
+
+// Helper function to broadcast new messages to all connected clients
+function broadcastNewMessage(newMessage) {
+    const payload = JSON.stringify({ type: 'new-message', message: newMessage });
+    wss.clients.forEach((client) => {
+        if (client.readyState === client.OPEN) {
+            client.send(payload);
+        }
+    });
+}
 
 // ------------------------- Middleware -------------------------
 function authenticateToken(req, res, next) {
@@ -201,7 +223,6 @@ app.get("/messages/:contactId", authenticateToken, async (req, res) => {
         const decryptedMessages = messages.map((msg) => {
             try {
                 const { encryptedMessage, encryptedAESKeyForReceiver, encryptedAESKeyForSender, iv } = JSON.parse(msg.content);
-
                 const ivBuffer = Buffer.from(iv, "base64");
                 const encryptedMessageBuffer = Buffer.from(encryptedMessage, "base64");
 
@@ -312,6 +333,14 @@ app.post("/messages", authenticateToken, async (req, res) => {
             iv: iv.toString("base64"),
         });
         await db.sendMessage(senderId, receiverId, messagePayload);
+
+        // Broadcast new message event to all connected WebSocket clients
+        const newMessage = {
+            senderId,
+            receiverId,
+            content
+        };
+        broadcastNewMessage(newMessage);
 
         res.status(201).json({ message: "Message sent successfully" });
     } catch (error) {

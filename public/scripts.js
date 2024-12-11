@@ -34,6 +34,62 @@ logoutBtn.addEventListener('click', () => {
 searchUserInput.addEventListener('input', handleSearchInput);
 sendMessageButton.addEventListener('click', sendMessage);
 
+// WebSocket
+let ws;
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Only connect after the user is logged in and authToken is available
+    if (sessionStorage.getItem('authToken')) {
+        // Use wss if you have SSL enabled, otherwise ws
+        ws = new WebSocket('wss://joechat.tech');
+        
+        ws.onopen = () => {
+            console.log('WebSocket connection established');
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log('Received WebSocket message:', data);
+
+            if (data.type === 'new-message') {
+                // A new message has arrived from another user
+                // If the new message's receiver or sender is part of the current chat, update the UI
+                
+                // Check if the message belongs to the currently opened chat
+                // data.message should contain at least senderId, receiverId, and content
+                const { senderId, receiverId, content } = data.message;
+
+                // If this message involves the current chat participant
+                if (receiverId === currentChatId || senderId === currentChatId) {
+                    // Append the new message to the chat UI
+                    const messageDiv = document.createElement('div');
+                    messageDiv.classList.add('message');
+                    messageDiv.classList.add(
+                        senderId === parseInt(sessionStorage.getItem('userId'))
+                            ? 'message-sent'
+                            : 'message-received'
+                    );
+                    messageDiv.textContent = content;
+                    chatMessages.appendChild(messageDiv);
+
+                    // Scroll to bottom
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }
+        };
+
+        ws.onerror = (err) => {
+            console.error('WebSocket error:', err);
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket connection closed');
+            // You could attempt to reconnect here if desired
+        };
+    }
+});
+
+
 // Functions
 
 // Handle user search
