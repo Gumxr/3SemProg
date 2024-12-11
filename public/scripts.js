@@ -262,14 +262,15 @@ function loadPreviousChats() {
                 const chatItem = document.createElement('div');
                 chatItem.classList.add('chat-item');
 
-                // Determine the other user's ID and email
+                // Determine the other user's ID
                 const contactId = chat.user_two_id === userId ? chat.user_one_id : chat.user_two_id;
-                const otherUserEmail = chat.other_user_email || `User ID: ${contactId}`;
+                // Since we do not have other_user_email from the backend, fallback to `User ID: contactId`
+                const displayName = `User ID: ${contactId}`;
 
                 console.log("Rendering chat with contact ID:", contactId);
 
                 chatItem.innerHTML = `
-                    <div class="chat-email">${otherUserEmail}</div>
+                    <div class="chat-email">${displayName}</div>
                     <div class="chat-message-preview">${chat.last_message || 'No messages yet'}</div>
                 `;
 
@@ -280,8 +281,8 @@ function loadPreviousChats() {
                     // Highlight the selected chat
                     chatItem.classList.add('selected');
 
-                    // Start the chat with the selected user
-                    startChat(contactId, otherUserEmail);
+                    // Start the chat with the selected user using the fallback displayName
+                    startChat(contactId, displayName);
                 });
 
                 chatList.appendChild(chatItem);
