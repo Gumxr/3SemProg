@@ -32,7 +32,25 @@ logoutBtn.addEventListener('click', () => {
 });
 
 searchUserInput.addEventListener('input', handleSearchInput);
+// Event Listeners
+logoutBtn.addEventListener('click', () => {
+    console.log('Logging out, clearing session.');
+    sessionStorage.clear();
+    window.location.href = 'start.html';
+});
+
+searchUserInput.addEventListener('input', handleSearchInput);
+
+// Trigger sendMessage when the "Send" button is clicked
 sendMessageButton.addEventListener('click', sendMessage);
+
+// Trigger sendMessage when the "Enter" key is pressed in the chatInput
+chatInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+});
+
 
 // WebSocket message handler
 function onWebSocketMessage(event) {
