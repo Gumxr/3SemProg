@@ -298,13 +298,9 @@ function loadPreviousChats() {
                 return;
             }
 
-            // Render each chat
-            chats.forEach(chat => {
-                const chatItem = document.createElement('div');
-                chatItem.classList.add('chat-item');
-
-                // Fetch user details for the contact
-                fetch(`/users/${chat.contact_id}`, {
+            // Fetch user details for each contact and sort by username
+            const chatPromises = chats.map(chat => {
+                return fetch(`/users/${chat.contact_id}`, {
                     method: 'GET',
                     headers: { Authorization: `Bearer ${authToken}` },
                 })
@@ -313,8 +309,22 @@ function loadPreviousChats() {
                         return response.json();
                     })
                     .then(contact => {
+                        return { ...chat, contact };
+                    });
+            });
+
+            Promise.all(chatPromises)
+                .then(chatsWithContacts => {
+                    // Sort chats by contact email
+                    chatsWithContacts.sort((a, b) => a.contact.email.localeCompare(b.contact.email));
+
+                    // Render each chat
+                    chatsWithContacts.forEach(chat => {
+                        const chatItem = document.createElement('div');
+                        chatItem.classList.add('chat-item');
+
                         chatItem.innerHTML = `
-                            <div class="chat-email">${contact.email}</div>
+                            <div class="chat-email">${chat.contact.email}</div>
                             <div class="chat-message-preview">Previous chat</div>
                         `;
 
@@ -326,14 +336,13 @@ function loadPreviousChats() {
                             chatItem.classList.add('selected');
 
                             // Start the chat with the selected user
-                            startChat(contact.id, contact.email);
+                            startChat(chat.contact.id, chat.contact.email);
                         });
 
                         chatList.appendChild(chatItem);
-                    })
-                    .catch(error => console.error('Error fetching contact details:', error));
-            });
+                    });
+                })
+                .catch(error => console.error('Error fetching contact details:', error));
         })
         .catch(error => console.error('Error loading previous chats:', error));
 }
-
