@@ -234,7 +234,9 @@ function sendMessage() {
             chatInput.value = '';
             // Do not reload messages here; rely on WebSockets to show the new message.
             if (isImportant && currentChatPhone) {
-                sendSms(currentChatPhone, messageContent);
+                const senderEmail = sessionStorage.getItem('email');
+                const currentEmail = document.getElementById('selectedChatUser').innerHTML;
+                sendSms(senderEmail, currentChatPhone, currentEmail);
                 sendAsSmsCheckbox.checked = false;
                 return;
             } else if (isImportant && !currentChatPhone) {
@@ -247,8 +249,8 @@ function sendMessage() {
 }
 
 // Helper function to send SMS via Twilio
-function sendSms(phoneNumber, message) {
-    console.log('Sending SMS to:', phoneNumber);
+function sendSms(senderEmail, currentChatPhone, currentEmail) {
+    console.log('Sending SMS to:', currentChatPhone);
 
     return fetch('/send-important-sms', {
         method: 'POST',
@@ -257,8 +259,9 @@ function sendSms(phoneNumber, message) {
             Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({
-            recipientNumber: phoneNumber,
-            message: message,
+            recipientEmail: currentEmail,
+            recipientNumber: currentChatPhone,
+            senderEmail: senderEmail,
         }),
     })
         .then((response) => {

@@ -419,17 +419,20 @@ app.post("/messages", authenticateToken, async (req, res) => {
 });
 
 app.post('/send-important-sms', async (req, res) => {
-    const { recipientNumber, message } = req.body;
+    const { recipientEmail, recipientNumber, senderEmail } = req.body;
     console.log("recipientNumber:", recipientNumber)
-    console.log("message:", message)
+    console.log("senderEmail:", senderEmail)
+    console.log("recipientEmail:", recipientEmail)
 
-    if (!recipientNumber || !message) {
-        return res.status(400).json({ error: 'recipientNumber and message are required.' });
+    if (!recipientNumber || !recipientEmail) {
+        return res.status(400).json({ error: 'recipientNumber and recipientEmail are required.' });
     }
 
     try {
         const response = await client.messages.create({
-            body: message,
+            body: `
+            Hej ${recipientEmail}, du har en ny besked fra ${senderEmail} i JoeJuice appen. Log venligst ind for at læse den.
+            `,
             from: twilioPhoneNumber,
             to: `+45${recipientNumber}`,
         });
