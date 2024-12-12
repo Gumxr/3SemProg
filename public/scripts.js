@@ -188,26 +188,19 @@ async function loadMessages(contactId) {
 // Render messages in the chat UI
 function renderMessages(messages) {
     chatMessages.innerHTML = '';
-
     messages.forEach(message => {
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message');
-        messageDiv.classList.add(
-            message.sender_id === userId ? 'message-sent' : 'message-received'
-        );
-
-        const timestamp = new Date(message.timestamp).toLocaleString(); // Format timestamp
+        messageDiv.classList.add('message', message.sender_id === userId ? 'message-sent' : 'message-received');
+        const timestamp = new Date(message.timestamp).toLocaleString();
         messageDiv.innerHTML = `
             <div class="message-content">${message.content}</div>
             <div class="message-timestamp">${timestamp}</div>
         `;
-
         chatMessages.appendChild(messageDiv);
     });
-
-    // Scroll to the bottom to show the latest messages
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 
 
 // Send a new message
