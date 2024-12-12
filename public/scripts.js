@@ -192,7 +192,9 @@ function renderMessages(messages) {
     messages.forEach(message => {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', message.sender_id === userId ? 'message-sent' : 'message-received');
-        const timestamp = new Date(message.timestamp).toLocaleString();
+
+        // Convert UTC timestamp to local time
+        const timestamp = new Date(message.timestamp).toLocaleString(); // Localized to user's browser timezone
         messageDiv.innerHTML = `
             <div class="message-content">${message.content}</div>
             <div class="message-timestamp">${timestamp}</div>
@@ -201,6 +203,8 @@ function renderMessages(messages) {
     });
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
+
 
 
 
@@ -231,12 +235,21 @@ function sendMessage() {
         .then((response) => {
             if (!response.ok) throw new Error('Failed to send message');
             console.log('Message sent successfully.');
+
+            // Clear the input
             chatInput.value = '';
-            // Do not reload messages here; rely on WebSockets to show the new message.
+
+            // Immediately update the chat UI
+            const newMessage = {
+                sender_id: userId,
+                content: messageContent,
+                timestamp: new Date().toISOString(), // Use the current timestamp
+            };
+
+            appendMessageToChat(newMessage);
+
             if (isImportant && currentChatPhone) {
-                const senderEmail = sessionStorage.getItem('email');
-                const currentEmail = document.getElementById('selectedChatUser').innerHTML;
-                sendSms(senderEmail, currentChatPhone, currentEmail);
+                sendSms(currentChatPhone, messageContent);
                 sendAsSmsCheckbox.checked = false;
                 return;
             } else if (isImportant && !currentChatPhone) {
@@ -247,6 +260,20 @@ function sendMessage() {
             console.error('Error sending message:', error);
         });
 }
+
+// Helper function to append a single message to the chat UI
+function appendMessageToChat(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message', message.sender_id === userId ? 'message-sent' : 'message-received');
+    const timestamp = new Date(message.timestamp).toLocaleString();
+    messageDiv.innerHTML = `
+        <div class="message-content">${message.content}</div>
+        <div class="message-timestamp">${timestamp}</div>
+    `;
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 
 // Helper function to send SMS via Twilio
 function sendSms(senderEmail, currentChatPhone, currentEmail) {
