@@ -4,4 +4,4 @@ server/node_modules/
 .DS_Store
 .env
 .DS_Store
-private/chat_app.db
+
