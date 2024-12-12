@@ -279,16 +279,16 @@ function sendSms(senderEmail, currentChatPhone, currentEmail) {
 function loadPreviousChats() {
     console.log('Loading previous chats for user ID:', userId);
 
-    fetch(`/chats/${userId}`, {
+    fetch('/previous-chats', {
         method: 'GET',
         headers: { Authorization: `Bearer ${authToken}` },
     })
         .then(response => {
-            if (!response.ok) throw new Error('Failed to fetch chats');
+            if (!response.ok) throw new Error('Failed to fetch previous chats');
             return response.json();
         })
         .then(chats => {
-            console.log('Fetched chats:', chats);
+            console.log('Fetched previous chats:', chats);
 
             // Clear the chat list
             chatList.innerHTML = '';
@@ -302,32 +302,62 @@ function loadPreviousChats() {
             chats.forEach(chat => {
                 const chatItem = document.createElement('div');
                 chatItem.classList.add('chat-item');
-            
-                // Determine the other user's ID and email
-                const contactId = chat.user_two_id === userId ? chat.user_one_id : chat.user_two_id;
-                const otherUserEmail = chat.other_user_email; // Now we rely on the backend
-            
-                console.log("Rendering chat with contact ID:", contactId);
-            
-                chatItem.innerHTML = `
-                    <div class="chat-email">${otherUserEmail}</div>
-                    <div class="chat-message-preview">${chat.last_message || 'No messages yet'}</div>
-                `;
-            
-                chatItem.addEventListener('click', () => {
-                    // Remove 'selected' class from all chat items
-                    document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('selected'));
-            
-                    // Highlight the selected chat
-                    chatItem.classList.add('selected');
-            
-                    // Start the chat with the selected user using the real email now
-                    startChat(contactId, otherUserEmail);
-                });
-            
-                chatList.appendChild(chatItem);
+
+                // Fetch user details for the contact
+                fetch(`/users/${chat.contact_id}`, {
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${authToken}` },
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to fetch user details');
+                        return response.json();
+                    })
+                    .then(contact => {
+                        chatItem.innerHTML = `
+                            <div class="chat-email">${contact.email}</div>
+                            <div class="chat-message-preview">Previous chat</div>
+                        `;
+
+                        chatItem.addEventListener('click', () => {
+                            // Remove 'selected' class from all chat items
+                            document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('selected'));
+
+                            // Highlight the selected chat
+                            chatItem.classList.add('selected');
+
+                            // Start the chat with the selected user
+                            startChat(contact.id, contact.email);
+                        });
+
+                        chatList.appendChild(chatItem);
+                    })
+                    .catch(error => console.error('Error fetching contact details:', error));
             });
-            
         })
-        .catch(error => console.error('Error loading chats:', error));
+        .catch(error => console.error('Error loading previous chats:', error));
+}
+
+// Function to get previous chats based on messages table
+function getPreviousChats(userId) {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT DISTINCT 
+                CASE 
+                    WHEN sender_id = ? THEN receiver_id 
+                    ELSE sender_id 
+                END AS contact_id
+            FROM messages
+            WHERE sender_id = ? OR receiver_id = ?
+        `;
+        const params = [userId, userId, userId];
+
+        db.all(query, params, (err, rows) => {
+            if (err) {
+                console.error('Error fetching previous chats:', err.message);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
 }

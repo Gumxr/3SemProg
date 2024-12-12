@@ -75,6 +75,22 @@ app.get('/users', authenticateToken, async (req, res) => {
     }
 });
 
+// Endpoint to get user details by ID
+app.get('/users/:id', authenticateToken, async (req, res) => {
+    const userId = parseInt(req.params.id, 10);
+
+    try {
+        const user = await db.getUserById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.status(200).json(user);
+    } catch (error) {
+        console.error('Error fetching user details:', error.message);
+        res.status(500).json({ error: 'Failed to fetch user details' });
+    }
+});
+
 app.post('/validate-email', async (req, res) => {
     const { email } = req.body;
     if (!email) {
@@ -445,6 +461,20 @@ app.post('/send-important-sms', async (req, res) => {
     }
 });
 
+// Endpoint to get previous chats based on messages table
+app.get('/previous-chats', authenticateToken, async (req, res) => {
+    const userId = req.user.id;
+
+    try {
+        const previousChats = await db.getPreviousChats(userId);
+        res.status(200).json(previousChats);
+    } catch (error) {
+        console.error('Error fetching previous chats:', error.message);
+        res.status(500).json({ error: 'Failed to fetch previous chats' });
+    }
+});
+
+// ------------------------- Encryption Routes -------------------------
 app.post('/decrypt-private-key', async (req, res) => {
     const { encryptedPrivateKey, passphrase } = req.body;
     if (!encryptedPrivateKey || !passphrase) {

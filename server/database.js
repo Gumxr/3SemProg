@@ -232,6 +232,30 @@ function updateChatLastMessage(senderId, receiverId, lastMessage) {
     });
 }
 
+// Function to get previous chats based on messages table
+function getPreviousChats(userId) {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT DISTINCT 
+                CASE 
+                    WHEN sender_id = ? THEN receiver_id 
+                    ELSE sender_id 
+                END AS contact_id
+            FROM messages
+            WHERE sender_id = ? OR receiver_id = ?
+        `;
+        const params = [userId, userId, userId];
+
+        db.all(query, params, (err, rows) => {
+            if (err) {
+                console.error('Error fetching previous chats:', err.message);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
 
 
 module.exports = {
@@ -243,4 +267,7 @@ module.exports = {
     createChat,
     getMessages,
     sendMessage,
+    updateChatLastMessage,
+    getPreviousChats
+
 };
