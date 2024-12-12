@@ -325,7 +325,6 @@ function loadPreviousChats() {
 
                         chatItem.innerHTML = `
                             <div class="chat-email">${chat.contact.email}</div>
-                            <div class="chat-message-preview">Previous chat</div>
                         `;
 
                         chatItem.addEventListener('click', () => {
