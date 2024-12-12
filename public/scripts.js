@@ -107,7 +107,8 @@ function handleSearchInput() {
             })
             .then((users) => {
                 console.log('Users fetched successfully:', users);
-                renderUserList(users);
+                const filteredUsers = users.filter(user => user.id !== userId);
+                renderUserList(filteredUsers);
             })
             .catch((error) => {
                 console.error('Error fetching users:', error);
