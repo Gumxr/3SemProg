@@ -199,21 +199,30 @@ function renderMessages(messages) {
 
         if (message.file_url) {
             const fileUrl = message.file_url;
-            const fileExtension = fileUrl.split('.').pop().toLowerCase();
+            const fileNameWithNumbers = fileUrl.split('/').pop(); // Get the full file name with numbers
+            const fileExtension = fileNameWithNumbers.split('.').pop().toLowerCase();
+
+            // Remove numbers at the start of the file name
+            const fileName = fileNameWithNumbers.replace(/^\d+_/, ''); // Removes "1734036690313_" prefix
 
             if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension)) {
                 // Render image with click-to-view functionality
                 const imgElement = document.createElement('img');
                 imgElement.src = fileUrl;
-                imgElement.alt = "Sent Image";
+                imgElement.alt = fileName;
                 imgElement.classList.add('message-image');
                 imgElement.addEventListener('click', () => openImageViewModal(fileUrl));
                 messageDiv.appendChild(imgElement);
             } else {
-                // Non-image files show as a download link
-                messageDiv.innerHTML = `
-                    <a href="${fileUrl}" target="_blank">Download File</a>
-                `;
+                // Non-image files show as a download link with cleaned file name
+                const fileLink = document.createElement('a');
+                fileLink.href = fileUrl;
+                fileLink.target = '_blank';
+                fileLink.textContent = `Download ${fileName}`;
+                fileLink.classList.add('download-link');
+
+                // Append the file link to the message div
+                messageDiv.appendChild(fileLink);
             }
         } else {
             // Text-only message
@@ -224,6 +233,7 @@ function renderMessages(messages) {
     });
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 
 // Function to open image in modal
 function openImageViewModal(imageUrl) {
@@ -454,4 +464,5 @@ uploadFileButton.addEventListener("click", async () => {
     alert("Error uploading file: " + error.message);
   }
 });
+
 s
