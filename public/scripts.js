@@ -37,27 +37,28 @@ sendMessageButton.addEventListener('click', sendMessage);
 // WebSocket message handler
 function onWebSocketMessage(event) {
     const data = JSON.parse(event.data);
-    console.log('Received WebSocket message:', data);
+    console.log("Received WebSocket message:", data);
 
-    if (data.type === 'new-message') {
-        const { senderId, receiverId, content } = data.message;
-        
+    if (data.type === "new-message") {
+        const { senderId, receiverId, content, file_url } = data.message;
+
         // Check if this message belongs to the currently selected chat.
         if (receiverId === currentChatId || senderId === currentChatId) {
-            // Append the new message to the chat UI without reloading messages.
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message');
-            messageDiv.classList.add(
-                senderId === userId ? 'message-sent' : 'message-received'
-            );
-            messageDiv.textContent = content;
-            chatMessages.appendChild(messageDiv);
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message");
+            messageDiv.classList.add(senderId === userId ? "message-sent" : "message-received");
 
-            // Scroll to the bottom to show the new message.
+            messageDiv.innerHTML = `
+                <div class="message-content">${content || ""}</div>
+                ${file_url ? `<a href="${file_url}" target="_blank">Download File</a>` : ""}
+            `;
+
+            chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     }
 }
+
 
 // On DOM content loaded, set up WebSocket and load previous chats
 document.addEventListener('DOMContentLoaded', () => {
@@ -189,18 +190,67 @@ async function loadMessages(contactId) {
 // Render messages in the chat UI
 function renderMessages(messages) {
     chatMessages.innerHTML = '';
-    messages.forEach(message => {
+    messages.forEach((message) => {
         const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', message.sender_id === userId ? 'message-sent' : 'message-received');
-        const timestamp = new Date(message.timestamp).toLocaleString();
-        messageDiv.innerHTML = `
-            <div class="message-content">${message.content}</div>
-            <div class="message-timestamp">${timestamp}</div>
-        `;
+        messageDiv.classList.add(
+            'message',
+            message.sender_id === userId ? 'message-sent' : 'message-received'
+        );
+
+        if (message.file_url) {
+            const fileUrl = message.file_url;
+            const fileExtension = fileUrl.split('.').pop().toLowerCase();
+
+            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension)) {
+                // Render image with click-to-view functionality
+                const imgElement = document.createElement('img');
+                imgElement.src = fileUrl;
+                imgElement.alt = "Sent Image";
+                imgElement.classList.add('message-image');
+                imgElement.addEventListener('click', () => openImageViewModal(fileUrl));
+                messageDiv.appendChild(imgElement);
+            } else {
+                // Non-image files show as a download link
+                messageDiv.innerHTML = `
+                    <a href="${fileUrl}" target="_blank">Download File</a>
+                `;
+            }
+        } else {
+            // Text-only message
+            messageDiv.textContent = message.content;
+        }
+
         chatMessages.appendChild(messageDiv);
     });
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
+// Function to open image in modal
+function openImageViewModal(imageUrl) {
+    const modal = document.getElementById('imageViewModal');
+    const modalImage = document.getElementById('imageViewContent');
+    const closeModal = document.getElementById('closeImageModal');
+
+    modalImage.src = imageUrl; // Set image source
+    modal.style.display = 'block'; // Show the modal
+
+    // Close modal on click of close button
+    closeModal.onclick = () => {
+        modal.style.display = 'none';
+        modalImage.src = ''; // Clear image source when closed
+    };
+
+    // Close modal when clicking outside the image
+    modal.onclick = (event) => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+            modalImage.src = ''; // Clear image source when closed
+        }
+    };
+}
+
+
+
 
 
 
@@ -345,3 +395,63 @@ function loadPreviousChats() {
         })
         .catch(error => console.error('Error loading previous chats:', error));
 }
+
+
+const openUploadModalButton = document.getElementById("openUploadModalButton");
+const uploadModal = document.getElementById("uploadModal");
+const closeModal = document.getElementById("closeModal");
+const fileInput = document.getElementById("fileInput");
+const uploadFileButton = document.getElementById("uploadFileButton");
+
+// Open the upload modal
+openUploadModalButton.addEventListener("click", () => {
+  uploadModal.style.display = "block";
+});
+
+// Close the upload modal
+closeModal.addEventListener("click", () => {
+  uploadModal.style.display = "none";
+  fileInput.value = ""; // Clear file input
+});
+
+// Upload file button handler
+uploadFileButton.addEventListener("click", async () => {
+  const file = fileInput.files[0];
+  if (!file) {
+    alert("Please select a file to upload.");
+    return;
+  }
+
+  // Perform the upload
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("senderId", userId);
+    formData.append("receiverId", currentChatId);
+
+    const response = await fetch("/messages", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "File upload failed.");
+    }
+
+    const result = await response.json();
+    console.log("File uploaded successfully:", result);
+
+    // Update the chat UI (rely on WebSocket for real-time update)
+    alert("File uploaded successfully.");
+    uploadModal.style.display = "none";
+    fileInput.value = ""; // Clear the file input
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    alert("Error uploading file: " + error.message);
+  }
+});
+s

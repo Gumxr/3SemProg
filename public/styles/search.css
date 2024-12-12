@@ -272,6 +272,55 @@ body {
   text-align: right; /* Aligns timestamp neatly */
 }
 
+.message-image {
+  max-width: 200px; /* Limit the width of the image */
+  max-height: 200px; /* Limit the height of the image */
+  border-radius: 8px; /* Optional: Rounded corners */
+  display: block;
+  margin: 5px 0;
+}
+
+/* Image View Modal Container */
+.image-view-modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.9); /* Semi-transparent background */
+}
+
+/* Close Button for Image View Modal */
+.image-view-close {
+  position: absolute;
+  top: 15px;
+  right: 25px;
+  color: white;
+  font-size: 35px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+/* Full-View Image */
+.image-view-content {
+  margin: auto;
+  display: block;
+  max-width: 80%;
+  max-height: 80%;
+  animation: fadeIn 0.3s;
+}
+
+/* Add Animation (Optional) */
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+
 
 /* Chat Input */
 .chat-input-container {
@@ -314,6 +363,43 @@ body {
   background-color: #e88cb0;
   transform: scale(1.05);
 }
+
+label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  color: #f7f7f7;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+label:hover {
+  color: #f09bc1;
+}
+
+label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  appearance: none;
+  background-color: #2a2a2a;
+  border: 2px solid #3e3e3e;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+}
+
+label input[type="checkbox"]:checked {
+  background-color: #f09bc1;
+  border-color: #f09bc1;
+  transform: scale(1.1);
+}
+
+label input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 5px rgba(240, 155, 193, 0.5);
+}
+
 
 /* Send Icon */
 .icon {

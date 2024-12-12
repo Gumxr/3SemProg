@@ -47,11 +47,18 @@
       <!-- Chat Messages -->
       <div class="chat-messages" id="chatMessages">
         <!-- Dynamically loaded messages -->
+        <!-- Image View Modal -->
+        <div id="imageViewModal" class="image-view-modal" style="display: none;">
+          <span id="closeImageModal" class="image-view-close">&times;</span>
+          <img id="imageViewContent" class="image-view-content" src="" alt="Full View">
+        </div>
+
       </div>
 
       <!-- Chat Input -->
       <div class="chat-input-container">
         <input type="text" id="chatInput" placeholder="Type your message..." />
+        <button id="openUploadModalButton">Upload File</button>
         <label for="sendAsSmsCheckbox"> <input type="checkbox" id="sendAsSmsCheckbox" /> Important message</label>
         <button id="sendMessageButton" class="send-btn">
           <svg viewBox="0 0 24 24" class="icon">
@@ -59,6 +66,18 @@
           </svg>
         </button>
       </div>
+
+      <div id="uploadModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <span id="closeModal" class="close">&times;</span>
+          <h2>Upload File</h2>
+          <input type="file" id="fileInput" />
+          <button id="uploadFileButton">Upload</button>
+        </div>
+      </div>
+      
+
+
     </main>
   </div>
 

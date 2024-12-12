@@ -168,9 +168,10 @@ function createChat(userOneId, userTwoId) {
 function getMessages(userId, contactId) {
     return new Promise((resolve, reject) => {
         const query = `
-            SELECT * FROM messages
+            SELECT id, sender_id, receiver_id, content, timestamp, file_url
+            FROM messages
             WHERE (sender_id = ? AND receiver_id = ?)
-            OR (sender_id = ? AND receiver_id = ?)
+               OR (sender_id = ? AND receiver_id = ?)
             ORDER BY timestamp ASC
         `;
         const params = [userId, contactId, contactId, userId];
@@ -186,29 +187,29 @@ function getMessages(userId, contactId) {
     });
 }
 
-function sendMessage(senderId, receiverId, content) {
+
+function sendMessage(senderId, receiverId, content, fileUrl = null) {
     return new Promise((resolve, reject) => {
         const query = `
-            INSERT INTO messages (sender_id, receiver_id, content, timestamp, is_read) 
-            VALUES (?, ?, ?, datetime('now'), false)
+            INSERT INTO messages (sender_id, receiver_id, content, timestamp, file_url) 
+            VALUES (?, ?, ?, datetime('now'), ?)
         `;
-        const params = [senderId, receiverId, content];
+        const params = [senderId, receiverId, content, fileUrl];
 
         db.run(query, params, function (err) {
             if (err) {
                 console.error('Error saving message:', err.message);
                 reject(err);
             } else {
-                // After inserting the message, call updateChatLastMessage
-                updateChatLastMessage(senderId, receiverId, content)
-                    .then(() => resolve({ message: 'Message sent successfully' }))
-                    .catch(reject);
+                console.log('Message saved successfully with ID:', this.lastID);
+                resolve({ messageId: this.lastID });
             }
         });
     });
 }
 
 
+// TROR IKKR VI SKAL BRUGE DENNE - SKAL NOK SLETTES
 function updateChatLastMessage(senderId, receiverId, lastMessage) {
     console.log('Updating chat last message...', senderId, receiverId, lastMessage);
     return new Promise((resolve, reject) => {
@@ -256,6 +257,9 @@ function getPreviousChats(userId) {
         });
     });
 }
+
+
+
 
 
 module.exports = {

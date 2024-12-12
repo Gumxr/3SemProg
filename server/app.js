@@ -288,45 +288,66 @@ app.post('/chats', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Failed to create chat' });
     }
 });
+// ------------------------- Cloudinary -----------------------------
+const cloudinary = require('cloudinary').v2;
+const { uploadFileToCloudinary } = require('./fileService');
+const multer = require('multer'); // Fix typo ("mulster" -> "multer")
+const upload = multer(); // Initialize multer for file uploads
 
 // ------------------------- Message Routes -------------------------
+
+// GET Route to Fetch Messages
 app.get("/messages/:contactId", authenticateToken, async (req, res) => {
     const userId = req.user.id;
     const contactId = parseInt(req.params.contactId, 10);
 
     try {
+        // Fetch messages between two users
         const messages = await db.getMessages(userId, contactId);
 
         if (!messages || messages.length === 0) {
             return res.status(200).json([]);
         }
 
+        // Fetch user's private key
         const user = await db.getUserById(userId);
         if (!user || !user.private_key) {
             return res.status(404).json({ error: "User not found or missing private key" });
         }
 
+        // Decrypt messages and handle file-only messages
         const decryptedMessages = messages.map((msg) => {
             try {
+                if (!msg.content && msg.file_url) {
+                    // Handle file-only messages
+                    return {
+                        ...msg,
+                        content: "[File-only message]",
+                        file_url: msg.file_url,
+                    };
+                }
+
+                // Parse encrypted message content
                 const { encryptedMessage, encryptedAESKeyForReceiver, encryptedAESKeyForSender, iv } = JSON.parse(msg.content);
+
+                if (!encryptedMessage || !iv) {
+                    throw new Error("Missing encryptedMessage or IV");
+                }
+
                 const ivBuffer = Buffer.from(iv, "base64");
                 const encryptedMessageBuffer = Buffer.from(encryptedMessage, "base64");
 
-                if (ivBuffer.length !== 16) throw new Error("Invalid IV length");
-
+                // Determine the correct encrypted AES key
                 let usedEncryptedKey;
-                // Determine if current user is the receiver or the sender of this message
                 if (msg.receiver_id === userId && encryptedAESKeyForReceiver) {
-                    usedEncryptedKey = encryptedAESKeyForReceiver;
+                    usedEncryptedKey = Buffer.from(encryptedAESKeyForReceiver, "base64");
                 } else if (msg.sender_id === userId && encryptedAESKeyForSender) {
-                    usedEncryptedKey = encryptedAESKeyForSender;
+                    usedEncryptedKey = Buffer.from(encryptedAESKeyForSender, "base64");
                 } else {
-                    // Current user is neither the sender nor the receiver, or keys not available
-                    return { ...msg, content: "[Encrypted - not for you]" };
+                    throw new Error("No valid encryption key for this user");
                 }
 
-                const aesKeyBuffer = Buffer.from(usedEncryptedKey, "base64");
-
+                // Decrypt the AES key using the user's private key
                 const privateKeyObject = crypto.createPrivateKey({
                     key: user.private_key,
                     format: "pem",
@@ -338,20 +359,24 @@ app.get("/messages/:contactId", authenticateToken, async (req, res) => {
                         key: privateKeyObject,
                         padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
                     },
-                    aesKeyBuffer
+                    usedEncryptedKey
                 );
 
+                // Decrypt the message
                 const decipher = crypto.createDecipheriv("aes-256-cbc", aesKey, ivBuffer);
                 const decryptedMessage = Buffer.concat([
                     decipher.update(encryptedMessageBuffer),
                     decipher.final(),
                 ]).toString("utf8");
 
-                console.log("Decrypted Message:", decryptedMessage);
-                return { ...msg, content: decryptedMessage };
+                return { ...msg, content: decryptedMessage, file_url: msg.file_url };
             } catch (error) {
                 console.error("Error decrypting message:", error.message);
-                return { ...msg, content: "[Unable to decrypt message]", error: error.message };
+                return {
+                    ...msg,
+                    content: "[Unable to decrypt message]",
+                    file_url: msg.file_url,
+                };
             }
         });
 
@@ -362,9 +387,19 @@ app.get("/messages/:contactId", authenticateToken, async (req, res) => {
     }
 });
 
-app.post("/messages", authenticateToken, async (req, res) => {
+// POST Route to Send Messages
+app.post('/messages', authenticateToken, upload.single('file'), async (req, res) => {
     try {
         const { senderId, receiverId, content } = req.body;
+        const file = req.file;
+
+        if (!content && !file) {
+            return res.status(400).json({ error: "A message must contain either content or a file." });
+        }
+
+        if (content && file) {
+            return res.status(400).json({ error: "A message cannot contain both content and a file." });
+        }
 
         const sender = await db.getUserById(senderId);
         if (!sender || !sender.public_key) {
@@ -376,57 +411,45 @@ app.post("/messages", authenticateToken, async (req, res) => {
             throw new Error("Receiver not found or missing public key");
         }
 
-        // Generate AES key and IV
-        const aesKey = crypto.randomBytes(32);
-        const iv = crypto.randomBytes(16);
+        let fileUrl = null;
 
-        // Encrypt the message using AES
-        const cipher = crypto.createCipheriv("aes-256-cbc", aesKey, iv);
-        const encryptedMessage = Buffer.concat([
-            cipher.update(content, "utf8"),
-            cipher.final(),
-        ]).toString("base64");
+        if (content) {
+            // Encrypt the message
+            const aesKey = crypto.randomBytes(32);
+            const iv = crypto.randomBytes(16);
+            const cipher = crypto.createCipheriv('aes-256-cbc', aesKey, iv);
+            const encryptedMessage = Buffer.concat([
+                cipher.update(content, 'utf8'),
+                cipher.final(),
+            ]).toString('base64');
 
-        console.log("Encrypted Message:", encryptedMessage);
+            // Encrypt AES keys for sender and receiver
+            const encryptedAESKeyForReceiver = crypto.publicEncrypt(
+                { key: receiver.public_key, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING },
+                aesKey
+            ).toString('base64');
 
-        // Encrypt AES key for receiver
-        const encryptedAESKeyForReceiver = crypto.publicEncrypt(
-            {
-                key: receiver.public_key,
-                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-            },
-            aesKey
-        ).toString("base64");
+            const encryptedAESKeyForSender = crypto.publicEncrypt(
+                { key: sender.public_key, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING },
+                aesKey
+            ).toString('base64');
 
-        // Encrypt AES key for sender
-        const encryptedAESKeyForSender = crypto.publicEncrypt(
-            {
-                key: sender.public_key,
-                padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-            },
-            aesKey
-        ).toString("base64");
+            const messagePayload = JSON.stringify({
+                encryptedMessage,
+                encryptedAESKeyForReceiver,
+                encryptedAESKeyForSender,
+                iv: iv.toString('base64'),
+            });
 
-        console.log("Encrypted AES Key For Receiver:", encryptedAESKeyForReceiver);
-        console.log("Encrypted AES Key For Sender:", encryptedAESKeyForSender);
-        console.log("IV:", iv.toString("base64"));
+            await db.sendMessage(senderId, receiverId, messagePayload, null);
+        } else if (file) {
+            // Upload file to Cloudinary
+            fileUrl = await uploadFileToCloudinary(file.buffer, file.originalname);
+            await db.sendMessage(senderId, receiverId, null, fileUrl);
+        }
 
-        // Save to database
-        const messagePayload = JSON.stringify({
-            encryptedMessage,
-            encryptedAESKeyForReceiver,
-            encryptedAESKeyForSender,
-            iv: iv.toString("base64"),
-        });
-        await db.sendMessage(senderId, receiverId, messagePayload);
-
-        // Broadcast new message event to all connected WebSocket clients
-        const newMessage = {
-            senderId,
-            receiverId,
-            content
-        };
-        broadcastNewMessage(newMessage);
+        // Broadcast the new message via WebSocket
+        broadcastNewMessage({ senderId, receiverId, content, fileUrl });
 
         res.status(201).json({ message: "Message sent successfully" });
     } catch (error) {
@@ -434,6 +457,7 @@ app.post("/messages", authenticateToken, async (req, res) => {
         res.status(500).json({ error: "Failed to send message", details: error.message });
     }
 });
+
 
 app.post('/send-important-sms', async (req, res) => {
     const { recipientEmail, recipientNumber, senderEmail } = req.body;
