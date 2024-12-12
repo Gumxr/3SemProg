@@ -486,4 +486,3 @@ uploadFileButton.addEventListener("click", async () => {
   }
 });
 
-s
