@@ -193,20 +193,13 @@ function renderMessages(messages) {
         messageDiv.classList.add(
             message.sender_id === userId ? 'message-sent' : 'message-received'
         );
-
-        const timestamp = new Date(message.timestamp).toLocaleString(); // Format timestamp
-        messageDiv.innerHTML = `
-            <div class="message-content">${message.content}</div>
-            <div class="message-timestamp">${timestamp}</div>
-        `;
-
+        messageDiv.textContent = message.content; 
         chatMessages.appendChild(messageDiv);
     });
 
     // Scroll to the bottom to show the latest messages
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
 
 // Send a new message
 function sendMessage() {
@@ -268,32 +261,32 @@ function loadPreviousChats() {
             chats.forEach(chat => {
                 const chatItem = document.createElement('div');
                 chatItem.classList.add('chat-item');
-            
-                // Determine the other user's ID and email
+
+                // Determine the other user's ID
                 const contactId = chat.user_two_id === userId ? chat.user_one_id : chat.user_two_id;
-                const otherUserEmail = chat.other_user_email; // Now we rely on the backend
-            
+                // Since we do not have other_user_email from the backend, fallback to `User ID: contactId`
+                const displayName = `User ID: ${contactId}`;
+
                 console.log("Rendering chat with contact ID:", contactId);
-            
+
                 chatItem.innerHTML = `
-                    <div class="chat-email">${otherUserEmail}</div>
+                    <div class="chat-email">${displayName}</div>
                     <div class="chat-message-preview">${chat.last_message || 'No messages yet'}</div>
                 `;
-            
+
                 chatItem.addEventListener('click', () => {
                     // Remove 'selected' class from all chat items
                     document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('selected'));
-            
+
                     // Highlight the selected chat
                     chatItem.classList.add('selected');
-            
-                    // Start the chat with the selected user using the real email now
-                    startChat(contactId, otherUserEmail);
+
+                    // Start the chat with the selected user using the fallback displayName
+                    startChat(contactId, displayName);
                 });
-            
+
                 chatList.appendChild(chatItem);
             });
-            
         })
         .catch(error => console.error('Error loading chats:', error));
 }
