@@ -83,7 +83,7 @@ form.addEventListener('submit', async (e) => {
             if (response.ok) {
                 // Move to Step 4: Confirmation code input
                 currentStep++;
-                stepTitle.textContent = 'Step 4: Enter Confirmation Code';
+                stepTitle.textContent = 'Trin 4: Indtast din bekræftelseskode';
                 form.innerHTML = `
                     <input type="text" id="confirmationCode" placeholder="Confirmation Code" required />
                     <button type="submit">Verify</button>

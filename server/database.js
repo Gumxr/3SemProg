@@ -89,7 +89,7 @@ function verifyUser(email, password) {
 
 function searchUsers(search) {
     return new Promise((resolve, reject) => {
-        const query = 'SELECT id, email FROM users WHERE email LIKE ?';
+        const query = 'SELECT id, email, phone FROM users WHERE email LIKE ?';
         const params = [`${search}%`];
         db.all(query, params, (err, rows) => {
             if (err) {

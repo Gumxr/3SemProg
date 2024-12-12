@@ -12,6 +12,7 @@ const userId = parseInt(sessionStorage.getItem('userId'), 10);
 // Global Variables
 let currentChatId = null; // Store the current chat ID
 let ws; // WebSocket variable
+let currentChatPhone = null;
 
 // Authentication Validation
 if (!authToken) {
@@ -134,7 +135,7 @@ function renderUserList(userArray) {
         li.textContent = user.email;
         li.addEventListener('click', () => {
             console.log('Starting chat with user ID:', user.id);
-            startChat(user.id, user.email); // Pass user email to startChat
+            startChat(user.id, user.email, user.phone); // Pass user email to startChat
             userList.innerHTML = '';
             searchUserInput.value = user.email;
         });
@@ -143,9 +144,10 @@ function renderUserList(userArray) {
 }
 
 // Start a chat with a specific user
-function startChat(receiverId, contactEmail) {
+function startChat(receiverId, contactEmail, contactPhone) {
     console.log('Starting chat with receiver ID:', receiverId);
     currentChatId = receiverId;
+    currentChatPhone = contactPhone;
     updateChatTitle(contactEmail);
     loadMessages(receiverId);
 }
@@ -204,6 +206,8 @@ function renderMessages(messages) {
 // Send a new message
 function sendMessage() {
     const messageContent = chatInput.value.trim();
+    const isImportant = document.getElementById('sendAsSmsCheckbox').checked; // Checkbox for SMS option
+
     console.log('Sending message:', messageContent);
 
     if (!messageContent || !currentChatId) {
@@ -228,9 +232,42 @@ function sendMessage() {
             console.log('Message sent successfully.');
             chatInput.value = '';
             // Do not reload messages here; rely on WebSockets to show the new message.
+            if (isImportant && currentChatPhone) {
+                sendSms(currentChatPhone, messageContent);
+                sendAsSmsCheckbox.checked = false;
+                return;
+            } else if (isImportant && !currentChatPhone) {
+                alert('The selected user does not have a phone number associated for SMS.');
+            }
         })
         .catch((error) => {
             console.error('Error sending message:', error);
+        });
+}
+
+// Helper function to send SMS via Twilio
+function sendSms(phoneNumber, message) {
+    console.log('Sending SMS to:', phoneNumber);
+
+    return fetch('/send-important-sms', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+            recipientNumber: phoneNumber,
+            message: message,
+        }),
+    })
+        .then((response) => {
+            if (!response.ok) throw new Error('Failed to send SMS');
+            console.log('SMS sent successfully.');
+            alert('Message sent via SMS!');
+        })
+        .catch((error) => {
+            console.error('Error sending SMS:', error);
+            alert('Failed to send SMS. Please try again later.');
         });
 }
 

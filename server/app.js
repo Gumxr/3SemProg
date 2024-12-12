@@ -17,6 +17,12 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.json());
 app.use(cors());
 
+// Twilio Configuration
+const accountSid = process.env.TWILIO_ACCOUNT_SID; 
+const authToken = process.env.TWILIO_AUTH_TOKEN;  
+const twilioPhoneNumber = '+14435438666';
+const client = twilio(accountSid, authToken);
+
 // Create an HTTP server from the Express app
 const server = http.createServer(app);
 server.listen(port, '0.0.0.0', () => {
@@ -62,7 +68,7 @@ app.get('/users', authenticateToken, async (req, res) => {
     try {
         const { search } = req.query;
         const users = search ? await db.searchUsers(search) : [];
-        res.status(200).json(users.map((user) => ({ id: user.id, email: user.email })));
+        res.status(200).json(users.map((user) => ({ id: user.id, email: user.email, phone: user.phone })));
     } catch (error) {
         console.error('Error fetching users:', error.message);
         res.status(500).json({ error: 'Failed to fetch users' });
@@ -102,11 +108,6 @@ app.post('/authenticate-number', async (req, res) => {
     if (!number || number.length < 8) {
         return res.status(400).json({ error: "Invalid phone number" });
     }
-
-    // Twilio API nøgler
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const client = twilio(accountSid, authToken);
 
     try {
         // Generate 4-digit code
@@ -414,6 +415,30 @@ app.post("/messages", authenticateToken, async (req, res) => {
     } catch (error) {
         console.error("Error sending message:", error.message);
         res.status(500).json({ error: "Failed to send message", details: error.message });
+    }
+});
+
+app.post('/send-important-sms', async (req, res) => {
+    const { recipientNumber, message } = req.body;
+    console.log("recipientNumber:", recipientNumber)
+    console.log("message:", message)
+
+    if (!recipientNumber || !message) {
+        return res.status(400).json({ error: 'recipientNumber and message are required.' });
+    }
+
+    try {
+        const response = await client.messages.create({
+            body: message,
+            from: twilioPhoneNumber,
+            to: `+45${recipientNumber}`,
+        });
+
+        console.log('SMS sent successfully:', response);
+        res.status(200).json({ message: 'SMS sent successfully.', data: response });
+    } catch (error) {
+        console.error('Error sending SMS:', error);
+        res.status(500).json({ error: 'Failed to send SMS.' });
     }
 });
 
