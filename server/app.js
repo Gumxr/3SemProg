@@ -25,9 +25,10 @@ const client = twilio(accountSid, authToken);
 
 // Create an HTTP server from the Express app
 const server = http.createServer(app);
-server.listen(port, '0.0.0.0', () => {
-    console.log(`Server is running on http://localhost:${port}`);
+server.listen(port, '::', () => {
+    console.log(`Server is running on http://[::]:${port}`);
 });
+
 
 // Create a WebSocket server
 const wss = new WebSocketServer({ server });
