@@ -106,11 +106,17 @@ function searchUsers(search) {
 function getChats(userId) {
     return new Promise((resolve, reject) => {
         const query = `
-            SELECT * FROM chats 
-            WHERE user_one_id = ? OR user_two_id = ?
+            SELECT c.*,
+                   u.email AS other_user_email
+            FROM chats c
+            JOIN users u ON u.id = CASE
+                WHEN c.user_one_id = ? THEN c.user_two_id
+                ELSE c.user_one_id
+            END
+            WHERE c.user_one_id = ? OR c.user_two_id = ?
             ORDER BY last_timestamp DESC
         `;
-        const params = [userId, userId];
+        const params = [userId, userId, userId];
 
         db.all(query, params, (err, rows) => {
             if (err) {
@@ -122,6 +128,7 @@ function getChats(userId) {
         });
     });
 }
+
 
 function createChat(userOneId, userTwoId) {
     return new Promise((resolve, reject) => {
@@ -192,11 +199,40 @@ function sendMessage(senderId, receiverId, content) {
                 console.error('Error saving message:', err.message);
                 reject(err);
             } else {
-                resolve({ message: 'Message sent successfully' });
+                // After inserting the message, call updateChatLastMessage
+                updateChatLastMessage(senderId, receiverId, content)
+                    .then(() => resolve({ message: 'Message sent successfully' }))
+                    .catch(reject);
             }
         });
     });
 }
+
+
+function updateChatLastMessage(senderId, receiverId, lastMessage) {
+    console.log('Updating chat last message...', senderId, receiverId, lastMessage);
+    return new Promise((resolve, reject) => {
+        const query = `
+            UPDATE chats
+            SET last_message = ?, last_timestamp = datetime('now')
+            WHERE (user_one_id = ? AND user_two_id = ?)
+               OR (user_one_id = ? AND user_two_id = ?)
+        `;
+        const params = [lastMessage, senderId, receiverId, receiverId, senderId];
+
+        db.run(query, params, function (err) {
+            if (err) {
+                console.error('Error updating chat last message:', err.message);
+                reject(err);
+            } else {
+                console.log('Chat last message updated successfully.');
+                resolve();
+            }
+        });
+    });
+}
+
+
 
 module.exports = {
     addUser,
