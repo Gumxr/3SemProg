@@ -31,6 +31,12 @@ logoutBtn.addEventListener('click', () => {
     window.location.href = 'start.html';
 });
 
+chatInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+});
+
 searchUserInput.addEventListener('input', handleSearchInput);
 sendMessageButton.addEventListener('click', sendMessage);
 
