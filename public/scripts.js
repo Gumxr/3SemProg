@@ -41,25 +41,31 @@ function onWebSocketMessage(event) {
 
     if (data.type === "new-message") {
         const { senderId, receiverId, content, fileUrl } = data.message;
+        console.log("Received new message:", { senderId, receiverId, content, fileUrl });
 
-        // Ensure the message belongs to the current chat
+        // Check if it matches the current chat
         if (receiverId === currentChatId || senderId === currentChatId) {
             const messageDiv = document.createElement("div");
             messageDiv.classList.add("message");
             messageDiv.classList.add(senderId === userId ? "message-sent" : "message-received");
 
             if (fileUrl) {
-                // Handle file-only message (e.g., image or attachment)
+                console.log("Attempting to display image from:", fileUrl);
                 const imgElement = document.createElement("img");
                 imgElement.src = fileUrl;
                 imgElement.alt = "Uploaded file";
                 imgElement.classList.add("message-image");
+
+                // Add an error listener to catch if the image fails to load
+                imgElement.addEventListener("error", (e) => {
+                    console.error("Image failed to load:", e);
+                });
+
                 imgElement.addEventListener("click", () => openImageViewModal(fileUrl));
                 messageDiv.appendChild(imgElement);
             }
 
             if (content) {
-                // Handle text content
                 const textDiv = document.createElement("div");
                 textDiv.classList.add("message-content");
                 textDiv.textContent = content;
@@ -67,10 +73,11 @@ function onWebSocketMessage(event) {
             }
 
             chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     }
 }
+
 
 
 

@@ -458,7 +458,7 @@ app.post('/messages', authenticateToken, upload.single('file'), async (req, res)
             await db.sendMessage(senderId, receiverId, null, fileUrl);
         }
 
-        // Broadcast the new message via WebSocket
+        // Broadcast the new message via WebSocket now that it's fully processed
         broadcastNewMessage({ senderId, receiverId, content, fileUrl });
 
         res.status(201).json({ message: "Message sent successfully" });
@@ -467,6 +467,7 @@ app.post('/messages', authenticateToken, upload.single('file'), async (req, res)
         res.status(500).json({ error: "Failed to send message", details: error.message });
     }
 });
+
 
 
 app.post('/send-important-sms', async (req, res) => {
