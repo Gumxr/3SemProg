@@ -463,5 +463,3 @@ uploadFileButton.addEventListener("click", async () => {
     alert("Error uploading file: " + error.message);
   }
 });
-
-s
