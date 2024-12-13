@@ -60,22 +60,38 @@ function onWebSocketMessage(event) {
             messageDiv.classList.add(sId === userId ? "message-sent" : "message-received");
 
             if (fileUrl) {
-                console.log("Attempting to display image from:", fileUrl);
-                const imgElement = document.createElement("img");
-                imgElement.src = fileUrl;
-                imgElement.alt = "Uploaded file";
-                imgElement.classList.add("message-image");
+                // Same logic as renderMessages for files
+                const fileNameWithNumbers = fileUrl.split('/').pop(); // full file name
+                const fileExtension = fileNameWithNumbers.split('.').pop().toLowerCase();
+                const fileName = fileNameWithNumbers.replace(/^\d+_/, '');
 
-                // Add an error listener to catch if the image fails to load
-                imgElement.addEventListener("error", (e) => {
-                    console.error("Image failed to load:", e);
-                });
+                // Check if it's an image or a regular file
+                if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension)) {
+                    console.log("Displaying image from:", fileUrl);
+                    const imgElement = document.createElement("img");
+                    imgElement.src = fileUrl;
+                    imgElement.alt = fileName;
+                    imgElement.classList.add("message-image");
 
-                imgElement.addEventListener("click", () => openImageViewModal(fileUrl));
-                messageDiv.appendChild(imgElement);
-            }
+                    // Handle image load error
+                    imgElement.addEventListener("error", (e) => {
+                        console.error("Image failed to load:", e);
+                    });
 
-            if (content) {
+                    imgElement.addEventListener("click", () => openImageViewModal(fileUrl));
+                    messageDiv.appendChild(imgElement);
+                } else {
+                    // Non-image file: create a download link
+                    console.log("Displaying non-image file:", fileName);
+                    const fileLink = document.createElement('a');
+                    fileLink.href = fileUrl;
+                    fileLink.target = '_blank';
+                    fileLink.textContent = `Download ${fileName}`;
+                    fileLink.classList.add('download-link');
+                    messageDiv.appendChild(fileLink);
+                }
+            } else if (content) {
+                // Text-only message
                 const textDiv = document.createElement("div");
                 textDiv.classList.add("message-content");
                 textDiv.textContent = content;
@@ -83,14 +99,10 @@ function onWebSocketMessage(event) {
             }
 
             chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
         }
     }
 }
-
-
-
-
 
 
 // On DOM content loaded, set up WebSocket and load previous chats
