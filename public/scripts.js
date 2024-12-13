@@ -37,26 +37,42 @@ sendMessageButton.addEventListener('click', sendMessage);
 // WebSocket message handler
 function onWebSocketMessage(event) {
     const data = JSON.parse(event.data);
-    console.log("WebSocket message data:", data); // Inspect this log
-    if (data.type === "new-message") {
-        const { senderId, receiverId, content, file_url } = data.message;
+    console.log("WebSocket message data:", data);
 
-        // Check if this message belongs to the currently selected chat.
+    if (data.type === "new-message") {
+        const { senderId, receiverId, content, fileUrl } = data.message;
+
+        // Ensure the message belongs to the current chat
         if (receiverId === currentChatId || senderId === currentChatId) {
             const messageDiv = document.createElement("div");
             messageDiv.classList.add("message");
             messageDiv.classList.add(senderId === userId ? "message-sent" : "message-received");
 
-            messageDiv.innerHTML = `
-                <div class="message-content">${content || ""}</div>
-                ${file_url ? `<a href="${file_url}" target="_blank">Download File</a>` : ""}
-            `;
+            if (fileUrl) {
+                // Handle file-only message (e.g., image or attachment)
+                const imgElement = document.createElement("img");
+                imgElement.src = fileUrl;
+                imgElement.alt = "Uploaded file";
+                imgElement.classList.add("message-image");
+                imgElement.addEventListener("click", () => openImageViewModal(fileUrl));
+                messageDiv.appendChild(imgElement);
+            }
+
+            if (content) {
+                // Handle text content
+                const textDiv = document.createElement("div");
+                textDiv.classList.add("message-content");
+                textDiv.textContent = content;
+                messageDiv.appendChild(textDiv);
+            }
 
             chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
         }
     }
 }
+
+
 
 
 // On DOM content loaded, set up WebSocket and load previous chats
@@ -257,11 +273,6 @@ function openImageViewModal(imageUrl) {
         }
     };
 }
-
-
-
-
-
 
 // Send a new message
 function sendMessage() {

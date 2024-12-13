@@ -38,15 +38,25 @@ wss.on('connection', (ws) => {
     ws.send(JSON.stringify({ type: 'welcome', message: 'Connected to WebSocket!' }));
 });
 
-// Helper function to broadcast new messages to all connected clients
 function broadcastNewMessage(newMessage) {
-    const payload = JSON.stringify({ type: 'new-message', message: newMessage });
-    wss.clients.forEach((client) => {
-        if (client.readyState === client.OPEN) {
-            client.send(payload);
-        }
-    });
+    try {
+        console.log("Broadcasting new message:", newMessage); // Debug the message
+
+        const payload = JSON.stringify({ type: 'new-message', message: newMessage });
+        console.log("WebSocket payload:", payload);
+
+        wss.clients.forEach((client) => {
+            if (client.readyState === client.OPEN) {
+                client.send(payload);
+            } else {
+                console.warn("Skipped client with state:", client.readyState); // Log non-open clients
+            }
+        });
+    } catch (error) {
+        console.error("Error broadcasting new message:", error.message); // Log any errors
+    }
 }
+
 
 // ------------------------- Middleware -------------------------
 function authenticateToken(req, res, next) {
