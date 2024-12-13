@@ -8,9 +8,6 @@ def reset_tables(database_path):
         # Disable foreign key constraints temporarily
         cursor.execute("PRAGMA foreign_keys = OFF;")
 
-        # Reset the `chats` table
-        cursor.execute("DELETE FROM chats;")
-
         # Reset the `messages` table
         cursor.execute("DELETE FROM messages;")
 
