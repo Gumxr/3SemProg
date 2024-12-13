@@ -49,11 +49,15 @@ function onWebSocketMessage(event) {
         const { senderId, receiverId, content, fileUrl } = data.message;
         console.log("Received new message:", { senderId, receiverId, content, fileUrl });
 
+        // Convert IDs to numbers before comparison
+        const sId = parseInt(senderId, 10);
+        const rId = parseInt(receiverId, 10);
+
         // Check if it matches the current chat
-        if (receiverId === currentChatId || senderId === currentChatId) {
+        if (rId === currentChatId || sId === currentChatId) {
             const messageDiv = document.createElement("div");
             messageDiv.classList.add("message");
-            messageDiv.classList.add(senderId === userId ? "message-sent" : "message-received");
+            messageDiv.classList.add(sId === userId ? "message-sent" : "message-received");
 
             if (fileUrl) {
                 console.log("Attempting to display image from:", fileUrl);
@@ -83,6 +87,7 @@ function onWebSocketMessage(event) {
         }
     }
 }
+
 
 
 
