@@ -32,27 +32,31 @@ logoutBtn.addEventListener('click', () => {
 });
 
 searchUserInput.addEventListener('input', handleSearchInput);
-// Event Listeners
-logoutBtn.addEventListener('click', () => {
-    console.log('Logging out, clearing session.');
-    sessionStorage.clear();
-    window.location.href = 'start.html';
-});
-
-searchUserInput.addEventListener('input', handleSearchInput);
-
-// Trigger sendMessage when the "Send" button is clicked
 sendMessageButton.addEventListener('click', sendMessage);
 
-// Trigger sendMessage when the "Enter" key is pressed in the chatInput
-chatInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-        sendMessage();
+// WebSocket message handler
+function onWebSocketMessage(event) {
+    const data = JSON.parse(event.data);
+    console.log("WebSocket message data:", data); // Inspect this log
+    if (data.type === "new-message") {
+        const { senderId, receiverId, content, file_url } = data.message;
+
+        // Check if this message belongs to the currently selected chat.
+        if (receiverId === currentChatId || senderId === currentChatId) {
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message");
+            messageDiv.classList.add(senderId === userId ? "message-sent" : "message-received");
+
+            messageDiv.innerHTML = `
+                <div class="message-content">${content || ""}</div>
+                ${file_url ? `<a href="${file_url}" target="_blank">Download File</a>` : ""}
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
     }
-});
-
-
-
+}
 
 
 // On DOM content loaded, set up WebSocket and load previous chats
@@ -183,76 +187,50 @@ async function loadMessages(contactId) {
 }
 
 // Render messages in the chat UI
-function renderMessage(message) {
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add(
-        'message',
-        message.sender_id === userId ? 'message-sent' : 'message-received'
-    );
-
-    if (message.file_url) {
-        const fileUrl = message.file_url;
-        const fileNameWithNumbers = fileUrl.split('/').pop(); // Get the full file name with numbers
-        const fileExtension = fileNameWithNumbers.split('.').pop().toLowerCase();
-
-        // Remove numbers at the start of the file name
-        const fileName = fileNameWithNumbers.replace(/^\d+_/, ''); // Removes "1734036690313_" prefix
-
-        if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension)) {
-            // Render image with click-to-view functionality
-            const imgElement = document.createElement('img');
-            imgElement.src = fileUrl;
-            imgElement.alt = fileName;
-            imgElement.classList.add('message-image');
-            imgElement.addEventListener('click', () => openImageViewModal(fileUrl));
-            messageDiv.appendChild(imgElement);
-        } else {
-            // Non-image files show as a download link with cleaned file name
-            const fileLink = document.createElement('a');
-            fileLink.href = fileUrl;
-            fileLink.target = '_blank';
-            fileLink.textContent = `Download ${fileName}`;
-            fileLink.classList.add('download-link');
-            messageDiv.appendChild(fileLink);
-        }
-    } else if (message.content) {
-        // Text-only message
-        messageDiv.textContent = message.content;
-    }
-
-    return messageDiv;
-}
-
 function renderMessages(messages) {
-    chatMessages.innerHTML = ''; // Clear the chat UI
+    chatMessages.innerHTML = '';
     messages.forEach((message) => {
-        const messageDiv = renderMessage(message);
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add(
+            'message',
+            message.sender_id === userId ? 'message-sent' : 'message-received'
+        );
+
+        if (message.file_url) {
+            const fileUrl = message.file_url;
+            const fileNameWithNumbers = fileUrl.split('/').pop(); // Get the full file name with numbers
+            const fileExtension = fileNameWithNumbers.split('.').pop().toLowerCase();
+
+            // Remove numbers at the start of the file name
+            const fileName = fileNameWithNumbers.replace(/^\d+_/, ''); // Removes "1734036690313_" prefix
+
+            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(fileExtension)) {
+                // Render image with click-to-view functionality
+                const imgElement = document.createElement('img');
+                imgElement.src = fileUrl;
+                imgElement.alt = fileName;
+                imgElement.classList.add('message-image');
+                imgElement.addEventListener('click', () => openImageViewModal(fileUrl));
+                messageDiv.appendChild(imgElement);
+            } else {
+                // Non-image files show as a download link with cleaned file name
+                const fileLink = document.createElement('a');
+                fileLink.href = fileUrl;
+                fileLink.target = '_blank';
+                fileLink.textContent = `Download ${fileName}`;
+                fileLink.classList.add('download-link');
+
+                // Append the file link to the message div
+                messageDiv.appendChild(fileLink);
+            }
+        } else {
+            // Text-only message
+            messageDiv.textContent = message.content;
+        }
+
         chatMessages.appendChild(messageDiv);
     });
-    chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the latest message
-}
-
-function onWebSocketMessage(event) {
-    const data = JSON.parse(event.data);
-    console.log("Received WebSocket message:", data);
-
-    if (data.type === "new-message") {
-        const { senderId, receiverId, content, file_url } = data.message;
-
-        // Check if this message belongs to the currently selected chat
-        if (receiverId === currentChatId || senderId === currentChatId) {
-            const message = {
-                sender_id: senderId,
-                receiver_id: receiverId,
-                content: content || null,
-                file_url: file_url || null,
-            };
-
-            const messageDiv = renderMessage(message);
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the latest message
-        }
-    }
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 
@@ -486,3 +464,4 @@ uploadFileButton.addEventListener("click", async () => {
   }
 });
 
+s
