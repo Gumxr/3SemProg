@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.json());
 app.use(cors());
 
-// Twilio Configuration
+// Twilio 
 const accountSid = process.env.TWILIO_ACCOUNT_SID; 
 const authToken = process.env.TWILIO_AUTH_TOKEN;  
 const twilioPhoneNumber = '+14435438666';
@@ -30,17 +30,16 @@ server.listen(port, '::', () => {
 });
 
 
-// Create a WebSocket server
+//WebSocket server
 const wss = new WebSocketServer({ server });
 wss.on('connection', (ws) => {
     console.log('New WebSocket client connected');
-    // Optionally send a welcome message
     ws.send(JSON.stringify({ type: 'welcome', message: 'Connected to WebSocket!' }));
 });
 
 function broadcastNewMessage(newMessage) {
     try {
-        console.log("Broadcasting new message:", newMessage); // Debug the message
+        console.log("Broadcasting new message:", newMessage); 
 
         const payload = JSON.stringify({ type: 'new-message', message: newMessage });
         console.log("WebSocket payload:", payload);
@@ -49,11 +48,11 @@ function broadcastNewMessage(newMessage) {
             if (client.readyState === client.OPEN) {
                 client.send(payload);
             } else {
-                console.warn("Skipped client with state:", client.readyState); // Log non-open clients
+                console.warn("Skipped client with state:", client.readyState);
             }
         });
     } catch (error) {
-        console.error("Error broadcasting new message:", error.message); // Log any errors
+        console.error("Error broadcasting new message:", error.message); 
     }
 }
 
@@ -125,13 +124,12 @@ app.post('/validate-email', async (req, res) => {
     }
 });
 
-const codes = {}; // Temporary in-memory storage for codes
+const codes = {};
 
 app.post('/authenticate-number', async (req, res) => {
     const { phone } = req.body;
     const number = phone;
     console.log(number)
-    // Validate input
     if (!number || number.length < 8) {
         return res.status(400).json({ error: "Invalid phone number" });
     }
@@ -176,7 +174,6 @@ app.post('/verify-code', (req, res) => {
         return res.status(400).json({ error: "Code has expired" });
     }
 
-    // Check if the code matches
     if (storedCode.code.toString() === code.toString()) {
         delete codes[number]; 
         res.status(200).json({ message: "Phone number verified successfully!" });
@@ -207,7 +204,6 @@ app.post('/create-user', async (req, res) => {
             return res.status(500).json({ error: 'Failed to retrieve private key after signup' });
         }
 
-        // Include passphrase in JWT
         const userPayload = { id: newUser.id, email: email, passphrase: salt };
         const accessToken = jwt.sign(userPayload, process.env.ACCESS_TOKEN_SECRET);
 
@@ -245,7 +241,6 @@ app.post('/users/login', async (req, res) => {
         console.log('Salt retrieved during login:', user.salt);
         console.log('Encrypted Private Key (from database):', userDetails.private_key);
 
-        // Include passphrase in JWT
         const tokenPayload = { id: user.id, email: user.email, passphrase: user.salt };
         const accessToken = jwt.sign(tokenPayload, process.env.ACCESS_TOKEN_SECRET);
 
@@ -422,7 +417,6 @@ app.post('/messages', authenticateToken, upload.single('file'), async (req, res)
         let fileUrl = null;
 
         if (content) {
-            // Encrypt the message
             const aesKey = crypto.randomBytes(32);
             const iv = crypto.randomBytes(16);
             const cipher = crypto.createCipheriv('aes-256-cbc', aesKey, iv);
@@ -431,7 +425,6 @@ app.post('/messages', authenticateToken, upload.single('file'), async (req, res)
                 cipher.final(),
             ]).toString('base64');
 
-            // Encrypt AES keys for sender and receiver
             const encryptedAESKeyForReceiver = crypto.publicEncrypt(
                 { key: receiver.public_key, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING },
                 aesKey
@@ -456,7 +449,6 @@ app.post('/messages', authenticateToken, upload.single('file'), async (req, res)
             await db.sendMessage(senderId, receiverId, null, fileUrl);
         }
 
-        // Broadcast the new message via WebSocket now that it's fully processed
         broadcastNewMessage({ senderId, receiverId, content, fileUrl });
 
         res.status(201).json({ message: "Message sent successfully" });
@@ -535,7 +527,6 @@ app.post('/decrypt-private-key', async (req, res) => {
     }
 });
 
-// Global Error Handling
 app.use((err, req, res, next) => {
     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
         console.error('Bad JSON payload:', err.message);

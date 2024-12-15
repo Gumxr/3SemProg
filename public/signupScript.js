@@ -1,8 +1,8 @@
-let currentStep = 1; // Track the current step
+// indelt i 4 trin
+let currentStep = 1; 
 const form = document.getElementById('activationForm');
 const stepTitle = document.getElementById('step-title');
 
-// Store user data as they progress
 const userData = {
     email: '',
     password: '',
@@ -13,7 +13,7 @@ form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     if (currentStep === 1) {
-        // Step 1: Validate email
+        // trin 1: validate email
         const email = document.getElementById('email').value.trim();
 
         try {
@@ -26,9 +26,9 @@ form.addEventListener('submit', async (e) => {
             if (response.ok) {
                 const data = await response.json();
                 console.log(`Email is valid! ${email}`);
-                userData.email = email; // Store email in userData
+                userData.email = email; 
 
-                // Move to Step 2
+                // Nu til trin 2
                 currentStep++;
                 stepTitle.textContent = 'Trin 2: Vælg din adgangskode';
                 form.innerHTML = `
@@ -45,7 +45,7 @@ form.addEventListener('submit', async (e) => {
             alert('Der opstod en fejl. Prøv igen senere.');
         }
     } else if (currentStep === 2) {
-        // Step 2: Confirm passwords
+        //2: Confirm adgangskode
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
 
@@ -54,9 +54,9 @@ form.addEventListener('submit', async (e) => {
             return;
         }
 
-        userData.password = password; // Store password in userData
+        userData.password = password; 
 
-        // Move to Step 3
+        // trin 3: Indtast telefonnummer
         currentStep++;
         stepTitle.textContent = 'Trin 3: Indtast dit telefonnummer';
         form.innerHTML = `
@@ -67,7 +67,7 @@ form.addEventListener('submit', async (e) => {
         const phone = document.getElementById('phone').value.trim();
 
         if (!/^\d{7,}$/.test(phone)) {
-            alert('Enter a valid phone number with at least 7 digits.');
+            alert('Enter a valid phone number with at least 7 digits.'); // joe & juice findes i mange lande men island er det land med færrest cifre telefonnummer på 7 cifre
             return;
         }
 
@@ -81,7 +81,7 @@ form.addEventListener('submit', async (e) => {
             });
 
             if (response.ok) {
-                // Move to Step 4: Confirmation code input
+                // twilio sender en bekræftelseskode til telefonnummeret
                 currentStep++;
                 stepTitle.textContent = 'Trin 4: Indtast din bekræftelseskode';
                 form.innerHTML = `
@@ -108,7 +108,6 @@ form.addEventListener('submit', async (e) => {
             });
     
             if (response.ok) {
-                // Phone number verified, proceed to profile creation
                 try {
                     const response = await fetch('/create-user', {
                         method: 'POST',
@@ -119,12 +118,11 @@ form.addEventListener('submit', async (e) => {
                     if (response.ok) {
                         const data = await response.json();
         
-                        // The server provides user.passphrase as the actual passphrase (salt)
                         sessionStorage.setItem('authToken', data.accessToken);
                         sessionStorage.setItem('userId', data.user.id);
                         sessionStorage.setItem('email', data.user.email);
                         sessionStorage.setItem('privateKey', data.privateKey); 
-                        sessionStorage.setItem('passphrase', data.user.passphrase); // Store the server-provided passphrase
+                        sessionStorage.setItem('passphrase', data.user.passphrase); 
         
                         alert(`Signup successful! Welcome ${data.user.email}`);
                         window.location.href = "../index.html";

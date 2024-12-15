@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         try {
-            // Send login request
             const response = await fetch('/users/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -34,12 +33,12 @@ document.addEventListener('DOMContentLoaded', function () {
             sessionStorage.setItem('authToken', data.accessToken);
             sessionStorage.setItem('userId', data.user.id);
             sessionStorage.setItem('email', data.user.email);
-            sessionStorage.setItem('passphrase', data.user.passphrase); // directly from server response
+            sessionStorage.setItem('passphrase', data.user.passphrase);
 
             // Decrypt and store the private key
             if (data.user.encryptedPrivateKey) {
                 const encryptedPrivateKey = data.user.encryptedPrivateKey;
-                const passphrase = data.user.passphrase; // Use passphrase from backend
+                const passphrase = data.user.passphrase; // use passphrase fra backend
 
                 try {
                     const privateKey = await decryptPrivateKey(encryptedPrivateKey, passphrase);
@@ -53,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             alert(`Login successful! Welcome ${data.user.email}`);
-            window.location.href = "../index.html"; // Redirect to homepage
+            window.location.href = "../index.html"; 
         } catch (error) {
             console.error('Error during login:', error.message);
             alert(error.message);
@@ -61,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+// funktion der dekrypterer private key
 async function decryptPrivateKey(encryptedPrivateKey, passphrase) {
     try {
         const response = await fetch('/decrypt-private-key', {
