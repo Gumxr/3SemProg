@@ -6,5 +6,5 @@
 
 4. kør node app.js 
 
-Inde i server/.env skal API keys for JWT, Twilio og cloudinary indtastes
+Inde i server/.env skal API keys for Twilio og cloudinary indtastes
 Grundet brug af websockets opdater beskeder ikke når de skrives i localhost. Men virker på hjemmesiden joechat.tech
