@@ -56,11 +56,14 @@
       <div class="chat-input-container">
         <input type="text" id="chatInput" placeholder="Type your message..." />
         <button id="openUploadModalButton">Upload File</button>
-        <label for="sendAsSmsCheckbox"> <input type="checkbox" id="sendAsSmsCheckbox" /> Important message</label>
-        <button id="sendMessageButton" class="send-btn">
-          <svg viewBox="0 0 24 24" class="icon">
+        <label for="sendAsSmsCheckbox">
+          <input type="checkbox" id="sendAsSmsCheckbox" /> Important message
+        </label>
+        <button id="sendMessageButton" class="send-btn" aria-label="Send Message">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
             <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
           </svg>
+          <span class="button-text">Send Message</span>
         </button>
       </div>
       
