@@ -336,7 +336,6 @@ body {
   color: #a5a5a5;
 }
 
-/* Existing Button Styles */
 .chat-input-container button {
   padding: 10px 12px;
   background-color: #f09bc1;
@@ -360,13 +359,13 @@ body {
 }
 
 .send-btn .icon {
-  width: 16px; /* Adjust to desired size */
+  width: 16px; 
   height: 16px;
   fill: currentColor;
 }
 
 .send-btn .button-text {
-  font-size: 14px; /* Adjust as needed */
+  font-size: 14px; 
   font-weight: 500;
 }
 
