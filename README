@@ -7,5 +7,5 @@
 4. kør node app.js 
 
 Inde i server/.env skal API keys for Twilio og cloudinary indtastes 
-For en sikkerheds skyld er vores private API-nøgler med i filen api_keys.txt, som ligger udenfor src-mappen i den zip-fil, vi sender til eksamen.
+For en sikkerheds skyld er vores private API-nøgler med i filen api_keys.txt, som ligger udenfor src-mappen 
 Grundet brug af websockets opdater beskeder ikke når de skrives i localhost. Men virker på hjemmesiden joechat.tech
