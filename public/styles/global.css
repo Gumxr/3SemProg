@@ -1,30 +1,32 @@
+/* Body Styles */
 body {
   margin: 0;
   font-family: 'Calibri', sans-serif;
-  background-color: #1c1c1c; /* Dark background */
-  color: #f7f7f7; /* Light text for contrast */
+  background-color: #1c1c1c; 
+  color: #f7f7f7; 
   height: 100vh;
-  display: flex; /* Enable flexbox for centering */
-  justify-content: center; /* Center horizontally */
-  align-items: center; /* Center vertically */
-  flex-direction: column; /* Ensures navbar stays at the top */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
 
+/* Navbar Styles */
 ul {
   list-style-type: none;
   margin: 0;
-  padding: 0 15px; /* Horizontal padding */
+  padding: 0 15px;
   display: flex;
   align-items: center;
-  background-color: #2a2a2a; /* Darker nav background */
+  background-color: #2a2a2a;
   font-size: 1.2em;
-  border-bottom: 2px solid #f09bc1; /* Pink accent line */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Slight shadow for depth */
-  height: 87px; /* Set fixed height */
-  position: fixed; /* Navbar stays at the top */
+  border-bottom: 2px solid #f09bc1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  height: 87px;
+  position: fixed;
   top: 0;
-  width: 100%; /* Full-width */
-  z-index: 100; /* Ensures navbar is above other elements */
+  width: 100%;
+  z-index: 100;
 }
 
 li {
@@ -35,28 +37,26 @@ li img {
   display: block;
   width: 60px;
   padding: 10px;
-  border-radius: 50%; /* Circular image for modern feel */
+  border-radius: 50%;
 }
 
 li a {
   display: block;
-  color: #f7c1d9; /* Soft pink text */
+  color: #f7c1d9;
   text-align: center;
   padding: 14px 20px;
   text-decoration: none;
   font-weight: 500;
   transition: background-color 0.3s ease, font-weight 0.3s ease, color 0.3s ease;
-  border-radius: 10px; /* Rounded edges for modern design */
+  border-radius: 10px;
 }
 
 li a:hover {
-  background-color: #f09bc1; /* Pink hover effect */
-  color: #1c1c1c; /* Dark text for contrast */
+  background-color: #f09bc1;
+  color: #1c1c1c;
   font-weight: bold;
 }
 
-
-/* Centered Content */
 .center {
   display: flex;
   flex-direction: column;
@@ -66,47 +66,46 @@ li a:hover {
   margin-top: 50px;
 }
 
-/* Buttons */
 .center button {
-  border: 2px solid #f7c1d9; /* Pink border */
+  border: 2px solid #f7c1d9;
   border-radius: 10px;
   padding: 10px 20px;
-  background-color: #2a2a2a; /* Match dark mode */
+  background-color: #2a2a2a;
   font-weight: bold;
-  color: #f7c1d9; /* Pink text */
+  color: #f7c1d9;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .center button:hover {
-  background-color: #f09bc1; /* Pink hover */
-  color: #1c1c1c; /* Dark text on hover */
+  background-color: #f09bc1;
+  color: #1c1c1c;
   transform: scale(1.05);
 }
 
-/* Inputs */
+/* Input and Select Styles */
 .center input,
 .center select {
-  border: 2px solid #f7c1d9; /* Pink border */
+  border: 2px solid #f7c1d9;
   border-radius: 10px;
   padding: 10px 20px;
   margin: 10px 0;
   font-size: 1em;
   width: 60%;
   max-width: 400px;
-  background-color: #2a2a2a; /* Dark input background */
-  color: #f7f7f7; /* Light text */
+  background-color: #2a2a2a;
+  color: #f7f7f7;
   box-sizing: border-box;
   transition: all 0.3s ease;
 }
 
 .center input::placeholder,
 .center select::placeholder {
-  color: #f09bc1; /* Pink placeholder text */
+  color: #f09bc1;
 }
 
 .center input:focus,
 .center select:focus {
-  border-color: #f09bc1; /* Bright pink focus */
+  border-color: #f09bc1;
   outline: none;
 }

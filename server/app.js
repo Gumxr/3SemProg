@@ -161,7 +161,6 @@ app.post('/verify-code', (req, res) => {
     const { phone, code } = req.body;
     const number = phone;
 
-    // Validate input
     if (!number || !code) {
         return res.status(400).json({ error: "Phone number and code are required" });
     }
@@ -172,15 +171,14 @@ app.post('/verify-code', (req, res) => {
         return res.status(400).json({ error: "No code found for this number" });
     }
 
-    // Check if the code has expired
     if (Date.now() > storedCode.expiresAt) {
-        delete codes[number]; // Clean up expired code
+        delete codes[number]; 
         return res.status(400).json({ error: "Code has expired" });
     }
 
     // Check if the code matches
     if (storedCode.code.toString() === code.toString()) {
-        delete codes[number]; // Clean up after successful verification
+        delete codes[number]; 
         res.status(200).json({ message: "Phone number verified successfully!" });
     } else {
         res.status(400).json({ error: "Invalid code" });
@@ -301,8 +299,8 @@ app.post('/chats', authenticateToken, async (req, res) => {
 // ------------------------- Cloudinary -----------------------------
 const cloudinary = require('cloudinary').v2;
 const { uploadFileToCloudinary } = require('./fileService');
-const multer = require('multer'); // Fix typo ("mulster" -> "multer")
-const upload = multer(); // Initialize multer for file uploads
+const multer = require('multer'); 
+const upload = multer(); 
 
 // ------------------------- Message Routes -------------------------
 
