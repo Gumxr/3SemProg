@@ -1,1 +1,11 @@
-Hvad skal skrives herinde?
+1. kør git clone https://github.com/Gumxr/3SemProg.git
+
+2. kør npm install
+
+3. kør npm install cloudinay
+
+4. kør npm install multer
+
+5. kør node app.js i server mappen
+
+Grundet brug af websockets opdater beskeder ikke når de skrives i localhost. Men virker på hjemmesiden joechat.tech
