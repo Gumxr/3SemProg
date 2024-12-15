@@ -1,7 +1,10 @@
 1. kør git clone https://github.com/Gumxr/3SemProg.git
 
-2. kør npm install
+2. naviger til cd /server
 
-3. kør node app.js i server mappen
+3. kør npm install
 
+4. kør node app.js 
+
+Inde i server/.env skal API keys for JWT, Twilio og cloudinary indtastes
 Grundet brug af websockets opdater beskeder ikke når de skrives i localhost. Men virker på hjemmesiden joechat.tech
